@@ -1,0 +1,21 @@
+id,name,category,unit_price_cents,sku,is_active,created_at
+1,Wireless Headphones Pro,electronics,14999,SKU-ELEC-001,true,2022-01-01
+2,Yoga Mat Premium,fitness,4999,SKU-FIT-001,true,2022-01-01
+3,Coffee Grinder Deluxe,kitchen,8999,SKU-KITCH-001,true,2022-01-01
+4,Running Shoes X500,footwear,12999,SKU-FOOT-001,true,2022-01-01
+5,Notebook Set (3-pack),stationery,1299,SKU-STAT-001,true,2022-01-01
+6,Bluetooth Speaker Mini,electronics,5999,SKU-ELEC-002,true,2022-02-01
+7,Resistance Bands Set,fitness,2499,SKU-FIT-002,true,2022-02-01
+8,Chef Knife Set,kitchen,15999,SKU-KITCH-002,true,2022-02-01
+9,Canvas Sneakers,footwear,6999,SKU-FOOT-002,true,2022-03-01
+10,Gel Pens (10-pack),stationery,899,SKU-STAT-002,true,2022-03-01
+11,Smart Watch Series 2,electronics,29999,SKU-ELEC-003,true,2022-04-01
+12,Foam Roller,fitness,3499,SKU-FIT-003,true,2022-04-01
+13,Air Fryer 4L,kitchen,9999,SKU-KITCH-003,true,2022-05-01
+14,Hiking Boots Trail,footwear,17999,SKU-FOOT-003,true,2022-05-01
+15,Mechanical Keyboard TKL,electronics,8999,SKU-ELEC-004,false,2022-06-01
+16,Protein Shaker Bottle,fitness,1499,SKU-FIT-004,true,2022-06-01
+17,Bamboo Cutting Board,kitchen,3999,SKU-KITCH-004,true,2022-07-01
+18,Leather Wallet Slim,accessories,4999,SKU-ACC-001,true,2022-07-01
+19,USB-C Hub 7-in-1,electronics,7999,SKU-ELEC-005,true,2022-08-01
+20,Sunglasses Polarized,accessories,8999,SKU-ACC-002,true,2022-09-01

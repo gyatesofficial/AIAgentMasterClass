@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dbt Zero to Hero</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<style>
+  :root {
+    --orange: #FF6B35;
+    --dark: #1a1a2e;
+    --mid: #16213e;
+    --accent: #0f3460;
+    --text: #2d3748;
+    --muted: #718096;
+    --border: #e2e8f0;
+    --code-bg: #1e2433;
+    --highlight: #fff3cd;
+    --green: #38a169;
+    --red: #e53e3e;
+    --blue: #3182ce;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; color: var(--text); background: #fff; font-size: 16px; line-height: 1.8; }
+
+  /* ── Cover ── */
+  .cover {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+    color: white; min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center; padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-badge { background: var(--orange); color: white; font-family: monospace; font-size: 13px;
+    padding: 6px 18px; border-radius: 20px; letter-spacing: 2px; margin-bottom: 40px; text-transform: uppercase; }
+  .cover h1 { font-size: 72px; font-weight: 900; letter-spacing: -2px; line-height: 1.1; margin-bottom: 16px; }
+  .cover h1 span { color: var(--orange); }
+  .cover .subtitle { font-size: 24px; font-weight: 300; opacity: 0.85; max-width: 600px; margin-bottom: 60px; }
+  .cover-divider { width: 80px; height: 4px; background: var(--orange); margin: 0 auto 60px; }
+  .cover-meta { font-size: 15px; opacity: 0.7; line-height: 2; }
+  .cover-toc { margin-top: 60px; text-align: left; max-width: 700px; width: 100%; }
+  .cover-toc h3 { color: var(--orange); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+  .cover-toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 40px; }
+  .cover-toc-item { font-size: 14px; opacity: 0.8; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .cover-toc-item span { color: var(--orange); font-weight: bold; margin-right: 8px; font-family: monospace; }
+
+  /* ── Layout ── */
+  .page { max-width: 900px; margin: 0 auto; padding: 60px 40px; }
+
+  /* ── Chapter headers ── */
+  .chapter-header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--accent) 100%);
+    color: white; padding: 60px 40px; margin: 0 -40px 60px;
+    page-break-before: always;
+  }
+  .chapter-label { color: var(--orange); font-family: monospace; font-size: 13px;
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+  .chapter-header h2 { font-size: 42px; font-weight: 900; line-height: 1.2; margin-bottom: 16px; }
+  .chapter-header p { font-size: 18px; opacity: 0.8; max-width: 600px; }
+
+  /* ── Typography ── */
+  h3 { font-size: 26px; font-weight: 800; color: var(--dark); margin: 48px 0 16px; padding-bottom: 8px;
+    border-bottom: 3px solid var(--orange); }
+  h4 { font-size: 19px; font-weight: 700; color: var(--accent); margin: 32px 0 12px; }
+  h5 { font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 8px; }
+  p { margin-bottom: 18px; }
+  ul, ol { margin: 0 0 18px 28px; }
+  li { margin-bottom: 8px; }
+  strong { color: var(--dark); }
+  em { font-style: italic; }
+  a { color: var(--blue); }
+
+  /* ── Code ── */
+  pre { background: var(--code-bg); border-radius: 10px; padding: 24px; margin: 24px 0;
+    overflow-x: auto; position: relative; }
+  pre code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13.5px; line-height: 1.7; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px;
+    background: #f0f4f8; padding: 2px 6px; border-radius: 4px; color: #c0392b; }
+  pre code { background: none; color: inherit; padding: 0; }
+  .code-label { background: var(--orange); color: white; font-size: 11px; font-family: monospace;
+    padding: 3px 10px; border-radius: 4px 4px 0 0; display: inline-block; margin-bottom: -4px; position: relative; z-index: 1; }
+
+  /* ── Callout boxes ── */
+  .callout { border-left: 5px solid; padding: 20px 24px; margin: 28px 0; border-radius: 0 8px 8px 0; }
+  .callout-title { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .callout.info    { border-color: var(--blue);  background: #ebf8ff; }
+  .callout.info    .callout-title { color: var(--blue); }
+  .callout.warning { border-color: #dd6b20; background: #fffaf0; }
+  .callout.warning .callout-title { color: #dd6b20; }
+  .callout.tip     { border-color: var(--green); background: #f0fff4; }
+  .callout.tip     .callout-title { color: var(--green); }
+  .callout.danger  { border-color: var(--red);   background: #fff5f5; }
+  .callout.danger  .callout-title { color: var(--red); }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px; }
+  th { background: var(--dark); color: white; padding: 12px 16px; text-align: left; font-size: 13px; }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  /* ── Special blocks ── */
+  .concept-box { background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+    border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin: 28px 0; }
+  .concept-box h4 { margin-top: 0; color: var(--accent); }
+
+  .diagram { background: var(--code-bg); color: #a0aec0; font-family: monospace; font-size: 13px;
+    padding: 24px; border-radius: 10px; margin: 24px 0; line-height: 1.6; overflow-x: auto; }
+
+  .exercise-box { background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 2px solid var(--orange); border-radius: 12px; padding: 28px; margin: 40px 0; }
+  .exercise-box h4 { color: var(--orange); margin-top: 0; }
+
+  .mental-model { background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border: 2px solid var(--green); border-radius: 12px; padding: 28px; margin: 28px 0; }
+  .mental-model h4 { color: var(--green); margin-top: 0; }
+
+  /* ── TOC ── */
+  .toc { page-break-after: always; }
+  .toc h2 { font-size: 36px; font-weight: 900; color: var(--dark); margin-bottom: 40px; }
+  .toc-part { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--orange);
+    font-weight: 700; margin: 32px 0 12px; }
+  .toc-chapter { display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0; border-bottom: 1px dotted var(--border); font-size: 15px; }
+  .toc-chapter .num { color: var(--orange); font-weight: 700; font-family: monospace; width: 40px; flex-shrink: 0; }
+  .toc-chapter .title { flex: 1; }
+
+  /* ── Print ── */
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .chapter-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    pre { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .exercise-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h3 { page-break-after: avoid; }
+    pre { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     COVER
+═══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Complete Course</div>
+  <h1>dbt <span>Zero</span><br>to Hero</h1>
+  <p class="subtitle">Build production-grade analytics engineering workflows from scratch</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    Companion repo: <strong>shopstream-dbt/</strong> &nbsp;·&nbsp;
+    Adapter-agnostic &nbsp;·&nbsp;
+    dbt Core 1.7+
+  </div>
+  <div class="cover-toc">
+    <h3>What's inside</h3>
+    <div class="cover-toc-grid">
+      <div class="cover-toc-item"><span>01</span> Analytics Engineering Philosophy</div>
+      <div class="cover-toc-item"><span>02</span> Setup &amp; First Project</div>
+      <div class="cover-toc-item"><span>03</span> Project Structure</div>
+      <div class="cover-toc-item"><span>04</span> Models &amp; Materializations</div>
+      <div class="cover-toc-item"><span>05</span> Sources, Seeds &amp; Freshness</div>
+      <div class="cover-toc-item"><span>06</span> Testing &amp; Documentation</div>
+      <div class="cover-toc-item"><span>07</span> The DAG &amp; ref()</div>
+      <div class="cover-toc-item"><span>08</span> Jinja &amp; Macros</div>
+      <div class="cover-toc-item"><span>09</span> Snapshots &amp; SCD Type 2</div>
+      <div class="cover-toc-item"><span>10</span> Incremental Models</div>
+      <div class="cover-toc-item"><span>11</span> Packages &amp; dbt-utils</div>
+      <div class="cover-toc-item"><span>12</span> Advanced Testing</div>
+      <div class="cover-toc-item"><span>13</span> Project Architecture at Scale</div>
+      <div class="cover-toc-item"><span>14</span> Hooks, Grants &amp; Operations</div>
+      <div class="cover-toc-item"><span>15</span> Exposures &amp; Semantic Layer</div>
+      <div class="cover-toc-item"><span>16</span> CI/CD &amp; Slim CI</div>
+      <div class="cover-toc-item"><span>17</span> Orchestration</div>
+      <div class="cover-toc-item"><span>18</span> Performance Optimization</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TABLE OF CONTENTS
+═══════════════════════════════════════════════ -->
+<div class="page toc">
+  <h2>Table of Contents</h2>
+
+  <div class="toc-part">Part I — Foundations</div>
+  <div class="toc-chapter"><span class="num">01</span><span class="title">Analytics Engineering &amp; the dbt Philosophy</span></div>
+  <div class="toc-chapter"><span class="num">02</span><span class="title">Installation, Setup &amp; Your First Project</span></div>
+  <div class="toc-chapter"><span class="num">03</span><span class="title">Project Structure &amp; Configuration</span></div>
+
+  <div class="toc-part">Part II — Core Concepts</div>
+  <div class="toc-chapter"><span class="num">04</span><span class="title">Models &amp; Materializations</span></div>
+  <div class="toc-chapter"><span class="num">05</span><span class="title">Sources, Seeds &amp; Freshness</span></div>
+  <div class="toc-chapter"><span class="num">06</span><span class="title">Testing &amp; Documentation</span></div>
+  <div class="toc-chapter"><span class="num">07</span><span class="title">The DAG, ref(), and Lineage</span></div>
+
+  <div class="toc-part">Part III — Intermediate Skills</div>
+  <div class="toc-chapter"><span class="num">08</span><span class="title">Jinja Templating &amp; Macros</span></div>
+  <div class="toc-chapter"><span class="num">09</span><span class="title">Snapshots &amp; SCD Type 2</span></div>
+  <div class="toc-chapter"><span class="num">10</span><span class="title">Incremental Models</span></div>
+  <div class="toc-chapter"><span class="num">11</span><span class="title">Packages &amp; dbt-utils</span></div>
+
+  <div class="toc-part">Part IV — Advanced Patterns</div>
+  <div class="toc-chapter"><span class="num">12</span><span class="title">Advanced Testing &amp; Data Quality</span></div>
+  <div class="toc-chapter"><span class="num">13</span><span class="title">Project Architecture at Scale</span></div>
+  <div class="toc-chapter"><span class="num">14</span><span class="title">Hooks, Grants &amp; Operations</span></div>
+  <div class="toc-chapter"><span class="num">15</span><span class="title">Exposures &amp; the Semantic Layer</span></div>
+
+  <div class="toc-part">Part V — Production</div>
+  <div class="toc-chapter"><span class="num">16</span><span class="title">CI/CD &amp; Slim CI</span></div>
+  <div class="toc-chapter"><span class="num">17</span><span class="title">Orchestration with Airflow &amp; Dagster</span></div>
+  <div class="toc-chapter"><span class="num">18</span><span class="title">Performance Optimization</span></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 1
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 01 · Foundations</div>
+  <h2>Analytics Engineering &amp;<br>the dbt Philosophy</h2>
+  <p>Why dbt exists, what problem it solves, and why SQL-first transformations beat every alternative for analytical work.</p>
+</div>
+
+<h3>The Transformation Problem</h3>
+<p>Every data team eventually hits the same wall. Raw data arrives from your source systems — Postgres, Salesforce, Stripe — and it lands in your warehouse in a format built for transactional databases, not analytics. Tables are normalized, column names are cryptic, monetary values are in cents, timestamps are in UTC without context, and foreign keys reference other tables that themselves need decoding.</p>
+
+<p>Someone has to transform that raw mess into clean, trustworthy tables that analysts can actually use. For years, teams did this in one of three ways:</p>
+
+<ol>
+  <li><strong>ETL pipelines:</strong> Python or Spark jobs that transform data before loading it. Expensive to write, painful to test, invisible to SQL analysts.</li>
+  <li><strong>BI tool logic:</strong> Transformations buried inside Tableau calculated fields or Looker PDTs. Logic scattered across tools with no version control.</li>
+  <li><strong>The SQL file graveyard:</strong> A shared drive full of files named <code>final_revenue_FINAL_v3_USE_THIS.sql</code>. No tests. No docs. No lineage.</li>
+</ol>
+
+<p>dbt is the fourth way. It lets you write transformations in SQL — the language your whole team already knows — but brings software engineering practices to those SQL files: version control, testing, documentation, and a dependency graph that makes lineage explicit.</p>
+
+<div class="concept-box">
+  <h4>The Analytics Engineering Insight</h4>
+  <p>Modern cloud warehouses (BigQuery, Snowflake, Redshift, DuckDB) are fast enough to transform data <em>inside</em> the warehouse rather than before loading it. This is the ELT (Extract, Load, Transform) pattern. dbt is purpose-built for the T in ELT.</p>
+  <p>dbt doesn't move data. It doesn't connect to source systems. It takes data that's already in your warehouse and transforms it into better data, still in your warehouse.</p>
+</div>
+
+<h3>What dbt Actually Is</h3>
+
+<p>At its core, dbt is a command-line tool that:</p>
+<ol>
+  <li>Takes your <code>.sql</code> files</li>
+  <li>Compiles them (resolves Jinja templates, <code>ref()</code> calls)</li>
+  <li>Runs the compiled SQL against your warehouse</li>
+  <li>Optionally runs tests against the results</li>
+</ol>
+
+<p>That's it. dbt generates and runs SQL. Everything else — documentation, lineage, testing, packages — is built on top of that simple foundation.</p>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your dbt Project                         │
+│                                                                 │
+│   models/stg_orders.sql          models/fct_orders.sql         │
+│   ┌────────────────────┐         ┌────────────────────────┐    │
+│   │ select             │         │ select                 │    │
+│   │   id as order_id,  │──ref()──│   o.*,                 │    │
+│   │   status,          │         │   c.customer_tier      │    │
+│   │   ...              │         │ from {{ ref('stg_...')}}│    │
+│   └────────────────────┘         └────────────────────────┘    │
+│              │                              │                   │
+│              ▼        dbt compile           ▼                   │
+│   ┌────────────────────────────────────────────────────────┐   │
+│   │         Compiled SQL (sent to warehouse)               │   │
+│   │   create view staging.stg_orders as (select ...)       │   │
+│   │   create table core.fct_orders as (select ...)         │   │
+│   └────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3>dbt Core vs dbt Cloud</h3>
+
+<table>
+  <thead><tr><th>Feature</th><th>dbt Core</th><th>dbt Cloud</th></tr></thead>
+  <tbody>
+    <tr><td>Open source CLI</td><td>✅ Free</td><td>✅ Included</td></tr>
+    <tr><td>All adapters</td><td>✅</td><td>✅</td></tr>
+    <tr><td>Scheduler / jobs</td><td>❌ (use Airflow/Dagster)</td><td>✅ Built-in</td></tr>
+    <tr><td>Web IDE</td><td>❌</td><td>✅</td></tr>
+    <tr><td>Docs hosting</td><td>❌ (self-host)</td><td>✅</td></tr>
+    <tr><td>CI/CD integration</td><td>Manual setup</td><td>✅ Native</td></tr>
+    <tr><td>Cost</td><td>Free</td><td>Freemium / paid</td></tr>
+  </tbody>
+</table>
+
+<p><strong>This course uses dbt Core.</strong> Everything you learn here works identically in dbt Cloud — the Cloud simply wraps the Core CLI in a UI.</p>
+
+<h3>The Three Pains dbt Solves</h3>
+
+<h4>Pain 1: No Lineage</h4>
+<p>With raw SQL files, you have no idea which query depends on which. Change a column name in one file and you won't know which downstream queries broke until they fail in production. dbt's <code>ref()</code> function makes every dependency explicit and enforces execution order automatically.</p>
+
+<h4>Pain 2: No Testing</h4>
+<p>Without tests, data quality issues surface when a stakeholder finds a wrong number in a dashboard. With dbt, you can assert that <code>order_id</code> is always unique, that <code>status</code> only contains expected values, and that every order belongs to a real customer — and these assertions run automatically every time you build your models.</p>
+
+<h4>Pain 3: No Documentation</h4>
+<p>Without documentation, institutional knowledge lives in people's heads. When someone leaves, knowledge walks out the door. dbt lets you write documentation in the same files as your models, auto-generate a searchable doc site, and keep documentation permanently in sync with your code.</p>
+
+<div class="mental-model">
+  <h4>Mental Model: dbt Is Version Control for Your Transformations</h4>
+  <p>Think of dbt the same way you think of Git for application code. Git didn't replace programmers or change what they write — it gave them a disciplined process for tracking changes, collaborating safely, and rolling back mistakes. dbt does the same for SQL: it doesn't change the SQL you write, it gives your SQL files the engineering discipline they've always deserved.</p>
+</div>
+
+<h3>The Modern Data Stack Context</h3>
+<p>dbt occupies one specific role in the modern data stack. Understanding what it doesn't do is as important as understanding what it does:</p>
+
+<table>
+  <thead><tr><th>Layer</th><th>Tool examples</th><th>Does dbt do this?</th></tr></thead>
+  <tbody>
+    <tr><td>Data extraction</td><td>Fivetran, Airbyte, Stitch</td><td>❌ No</td></tr>
+    <tr><td>Data loading</td><td>Fivetran, custom loaders</td><td>❌ No</td></tr>
+    <tr><td>Data transformation</td><td><strong>dbt</strong></td><td>✅ Yes — this is dbt's job</td></tr>
+    <tr><td>Data storage</td><td>Snowflake, BigQuery, DuckDB</td><td>❌ No</td></tr>
+    <tr><td>Data consumption</td><td>Tableau, Looker, Metabase</td><td>❌ No</td></tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+  <div class="callout-title">The ShopStream Scenario</div>
+  <p>Throughout this course you'll work with <strong>ShopStream</strong>, a fictional e-commerce company. Their data is loaded from a PostgreSQL operational database into a warehouse via Fivetran. Your job is to transform it into clean, tested, documented tables that the BI team and data scientists can trust. The companion repo (<code>shopstream-dbt/</code>) contains the full working project.</p>
+</div>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 2
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 02 · Foundations</div>
+  <h2>Installation, Setup &amp;<br>Your First Project</h2>
+  <p>Get dbt running, connect it to a warehouse, and build your first model in under 15 minutes.</p>
+</div>
+
+<h3>Installing dbt Core</h3>
+<p>dbt Core is a Python package. Install the adapter for your warehouse:</p>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash"># PostgreSQL (used in this course)
+pip install dbt-postgres
+
+# Other adapters — install only one
+pip install dbt-bigquery
+pip install dbt-snowflake
+pip install dbt-duckdb       # great for local development (no warehouse needed)
+pip install dbt-redshift</code></pre>
+
+<div class="callout tip">
+  <div class="callout-title">No warehouse? Use DuckDB</div>
+  <p><code>pip install dbt-duckdb</code> gives you a fully functional warehouse running locally as a file. All examples in this course work with DuckDB. When you're ready to go to production, the only thing that changes is your <code>profiles.yml</code>.</p>
+</div>
+
+<p>Verify installation:</p>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt --version
+# dbt Core: 1.7.x
+# Registered adapter: postgres=1.7.x</code></pre>
+
+<h3>Initializing a Project</h3>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt init shopstream
+cd shopstream</code></pre>
+
+<p>dbt creates this scaffold:</p>
+<div class="diagram">
+shopstream/
+├── dbt_project.yml      ← project configuration
+├── models/
+│   ├── example/
+│   │   ├── my_first_dbt_model.sql
+│   │   └── my_second_dbt_model.sql
+│   └── schema.yml
+├── tests/
+├── macros/
+├── seeds/
+├── snapshots/
+└── analyses/
+</div>
+
+<h3>Configuring profiles.yml</h3>
+<p>dbt separates project code (committed to git) from connection credentials (stored locally). Credentials live in <code>~/.dbt/profiles.yml</code> — never in your project.</p>
+
+<div class="code-label">~/.dbt/profiles.yml</div>
+<pre><code class="language-yaml">shopstream:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: myuser
+      password: mypassword
+      port: 5432
+      dbname: shopstream
+      schema: dbt_dev    # your personal dev schema
+      threads: 4</code></pre>
+
+<p>Test the connection:</p>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt debug
+# Connection test: [OK connection ok]</code></pre>
+
+<h3>Your First Model</h3>
+<p>Delete the example models and create <code>models/stg_orders.sql</code>:</p>
+
+<div class="code-label">models/stg_orders.sql</div>
+<pre><code class="language-sql">-- Your first dbt model: clean up raw orders
+select
+    id          as order_id,
+    customer_id,
+    status,
+    created_at  as order_placed_at
+from raw.orders</code></pre>
+
+<p>Run it:</p>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt run
+# Running with dbt=1.7.x
+# Found 1 model
+#
+# Completed successfully
+#
+# Done. PASS=1 WARN=0 ERROR=0 SKIP=0 TOTAL=1</code></pre>
+
+<p>dbt created a <strong>view</strong> called <code>dbt_dev.stg_orders</code> in your warehouse. That's a dbt model — a SQL <code>SELECT</code> statement that dbt wraps in <code>CREATE VIEW AS</code> and executes for you.</p>
+
+<h3>Key CLI Commands</h3>
+<table>
+  <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>dbt run</code></td><td>Build all models (create views/tables)</td></tr>
+    <tr><td><code>dbt test</code></td><td>Run all tests</td></tr>
+    <tr><td><code>dbt build</code></td><td><code>run</code> + <code>test</code> together, in DAG order</td></tr>
+    <tr><td><code>dbt compile</code></td><td>Render Jinja but don't execute — writes to <code>target/compiled/</code></td></tr>
+    <tr><td><code>dbt seed</code></td><td>Load CSV files from <code>seeds/</code> into the warehouse</td></tr>
+    <tr><td><code>dbt snapshot</code></td><td>Run snapshot models (SCD Type 2)</td></tr>
+    <tr><td><code>dbt docs generate</code></td><td>Generate the docs site artifacts</td></tr>
+    <tr><td><code>dbt docs serve</code></td><td>Serve the docs site at localhost:8080</td></tr>
+    <tr><td><code>dbt deps</code></td><td>Install packages from <code>packages.yml</code></td></tr>
+    <tr><td><code>dbt clean</code></td><td>Delete <code>target/</code> and <code>dbt_packages/</code></td></tr>
+  </tbody>
+</table>
+
+<h4>Node Selection</h4>
+<p>Every command accepts <code>--select</code> to target specific models:</p>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash"># Run a single model
+dbt run --select stg_orders
+
+# Run a model and all its downstream dependents (the + suffix)
+dbt run --select stg_orders+
+
+# Run all models in the staging/ directory
+dbt run --select staging
+
+# Run models with a specific tag
+dbt run --select tag:daily
+
+# Run models changed since the last run (Slim CI — covered in Ch. 16)
+dbt run --select state:modified+
+
+# Exclude a model
+dbt run --exclude stg_orders</code></pre>
+
+<div class="exercise-box">
+  <h4>Exercise 2.1 — First Run</h4>
+  <p>Clone the companion repo and run the ShopStream project:</p>
+  <pre><code class="language-bash">cd shopstream-dbt
+dbt deps
+dbt seed
+dbt build</code></pre>
+  <p>After it completes, query the warehouse directly: what tables/views were created? What schema are they in? What happens when you run <code>dbt build</code> a second time?</p>
+</div>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 3
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 03 · Foundations</div>
+  <h2>Project Structure &amp;<br>Configuration</h2>
+  <p>How a production dbt project is organized and configured — from dbt_project.yml to environment-aware profiles.</p>
+</div>
+
+<h3>dbt_project.yml Deep Dive</h3>
+<p>This is the heart of your project configuration. Every dbt project must have one:</p>
+
+<div class="code-label">dbt_project.yml</div>
+<pre><code class="language-yaml">name: 'shopstream'          # used in package references
+version: '1.0.0'
+config-version: 2
+
+# Which profile in ~/.dbt/profiles.yml to use
+profile: 'shopstream'
+
+# Where dbt looks for files
+model-paths:    ["models"]
+analysis-paths: ["analyses"]
+test-paths:     ["tests"]
+seed-paths:     ["seeds"]
+macro-paths:    ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Build artifacts land here (never commit target/)
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Project-level variables — accessible via var() in any model
+vars:
+  shopstream:
+    min_date: '2022-01-01'
+    payment_methods: ['credit_card', 'paypal', 'bank_transfer', 'gift_card']
+
+# Model configuration — applied hierarchically by directory
+models:
+  shopstream:
+    staging:
+      +materialized: view       # all staging models are views
+      +schema: staging          # created in the "staging" schema
+    intermediate:
+      +materialized: ephemeral  # no warehouse objects — become CTEs
+    marts:
+      +materialized: table      # all mart models are tables
+      core:
+        +schema: core
+      finance:
+        +schema: finance
+      marketing:
+        +schema: marketing</code></pre>
+
+<div class="callout info">
+  <div class="callout-title">The + prefix</div>
+  <p>In <code>dbt_project.yml</code>, config keys that start with <code>+</code> are dbt model configs (materialization, schema, tags, etc.). Keys without <code>+</code> are directory names. This syntax prevents ambiguity when a directory name might conflict with a config key.</p>
+</div>
+
+<h3>Directory Structure: The Three-Layer Convention</h3>
+<p>The most important structural decision in a dbt project is how you organize your <code>models/</code> directory. The industry-standard pattern uses three layers:</p>
+
+<div class="diagram">
+models/
+├── staging/          ← Layer 1: 1-to-1 with source tables
+│   ├── _sources.yml  ← source definitions
+│   ├── _staging.yml  ← model docs + tests
+│   ├── stg_customers.sql
+│   ├── stg_orders.sql
+│   └── stg_payments.sql
+│
+├── intermediate/     ← Layer 2: complex business logic (ephemeral)
+│   ├── int_orders_with_payments.sql
+│   └── int_customer_order_history.sql
+│
+└── marts/            ← Layer 3: clean tables for BI/ML
+    ├── core/
+    │   ├── _core.yml
+    │   ├── dim_customers.sql
+    │   └── fct_orders.sql
+    └── finance/
+        └── fct_revenue_daily.sql
+</div>
+
+<p>Each layer has strict rules about what it may and may not do:</p>
+
+<table>
+  <thead><tr><th>Layer</th><th>May do</th><th>Must NOT do</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Staging</strong></td>
+      <td>Rename, cast, simple flag derivations</td>
+      <td>Join to other models, aggregate, apply complex logic</td>
+    </tr>
+    <tr>
+      <td><strong>Intermediate</strong></td>
+      <td>Complex joins, aggregations, business logic</td>
+      <td>Be referenced by BI tools directly (ephemeral = invisible)</td>
+    </tr>
+    <tr>
+      <td><strong>Marts</strong></td>
+      <td>Produce final, BI-ready dim/fact tables</td>
+      <td>Read directly from sources (must go through staging)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Schema Naming in Practice</h3>
+<p>In production you want clean schema names: <code>staging</code>, <code>core</code>, <code>finance</code>. In development, multiple engineers sharing a warehouse need isolation. dbt's default schema naming concatenates them: <code>dbt_alice_staging</code>. You can override this by implementing the <code>generate_schema_name</code> macro:</p>
+
+<div class="code-label">macros/generate_schema_name.sql</div>
+<pre><code class="language-sql">{% macro generate_schema_name(custom_schema_name, node) -%}
+    {%- set default_schema = target.schema -%}
+
+    {%- if target.name == 'prod' -%}
+        {%- if custom_schema_name is none -%}
+            {{ default_schema }}
+        {%- else -%}
+            {{ custom_schema_name | trim }}
+        {%- endif -%}
+    {%- else -%}
+        {# In dev: all models land in the developer's personal schema #}
+        {{ default_schema }}
+    {%- endif -%}
+{%- endmacro %}</code></pre>
+
+<p>With this macro:</p>
+<ul>
+  <li><strong>prod target:</strong> <code>stg_orders</code> → <code>staging.stg_orders</code>, <code>fct_orders</code> → <code>core.fct_orders</code></li>
+  <li><strong>dev target:</strong> <code>stg_orders</code> → <code>dbt_alice.stg_orders</code>, <code>fct_orders</code> → <code>dbt_alice.fct_orders</code></li>
+</ul>
+
+<h3>Environment Variables</h3>
+<p>Never hardcode credentials. Use <code>env_var()</code> in profiles and optionally in models:</p>
+
+<div class="code-label">~/.dbt/profiles.yml</div>
+<pre><code class="language-yaml">shopstream:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: "{{ env_var('DBT_USER') }}"
+      password: "{{ env_var('DBT_PASSWORD') }}"
+      port: 5432
+      dbname: shopstream
+      schema: "{{ env_var('DBT_DEV_SCHEMA', 'dbt_dev') }}"  # default value
+      threads: 4</code></pre>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash">export DBT_USER=myuser
+export DBT_PASSWORD=mysecret
+dbt run</code></pre>
+
+<h3>The target Object</h3>
+<p>Inside any model or macro, the <code>target</code> object gives you context about the current execution environment:</p>
+
+<div class="code-label">sql (in a model)</div>
+<pre><code class="language-sql">-- Example: add a debug column only in dev
+select
+    *
+    {% if target.name != 'prod' %}
+    , '{{ target.name }}' as _dbt_target   -- shows up in dev, stripped in prod
+    {% endif %}
+from my_source_table</code></pre>
+
+<table>
+  <thead><tr><th>Variable</th><th>Example value</th></tr></thead>
+  <tbody>
+    <tr><td><code>target.name</code></td><td><code>"dev"</code>, <code>"prod"</code>, <code>"ci"</code></td></tr>
+    <tr><td><code>target.schema</code></td><td><code>"dbt_alice"</code></td></tr>
+    <tr><td><code>target.database</code></td><td><code>"shopstream"</code></td></tr>
+    <tr><td><code>target.type</code></td><td><code>"postgres"</code>, <code>"bigquery"</code></td></tr>
+    <tr><td><code>target.threads</code></td><td><code>4</code></td></tr>
+  </tbody>
+</table>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 4
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 04 · Core Concepts</div>
+  <h2>Models &amp; Materializations</h2>
+  <p>The four materializations every dbt engineer must master — and when to use each one.</p>
+</div>
+
+<h3>What Is a Model?</h3>
+<p>A dbt model is a <code>.sql</code> file containing a single <code>SELECT</code> statement. That's it. dbt wraps that <code>SELECT</code> in a <code>CREATE VIEW AS</code> or <code>CREATE TABLE AS</code> statement and executes it against your warehouse. You never write <code>CREATE</code>, <code>DROP</code>, or <code>INSERT</code> in a model — dbt handles all of that.</p>
+
+<div class="code-label">models/stg_customers.sql</div>
+<pre><code class="language-sql">-- This is a complete, valid dbt model.
+-- dbt will turn this into: CREATE VIEW staging.stg_customers AS (...)
+select
+    id          as customer_id,
+    lower(email) as email,
+    is_active,
+    created_at
+from raw.customers</code></pre>
+
+<h3>The Four Materializations</h3>
+
+<h4>1. view (default)</h4>
+<p>dbt creates a <strong>SQL view</strong>. No data is stored — the query runs every time the view is queried. Views are always "fresh" but can be slow if the underlying tables are large.</p>
+
+<div class="code-label">Config options (pick one)</div>
+<pre><code class="language-sql">-- Option A: in-file config block (takes precedence over dbt_project.yml)
+{{ config(materialized='view') }}
+
+select ...
+
+-- Option B: dbt_project.yml (applies to all models in a directory)
+models:
+  shopstream:
+    staging:
+      +materialized: view</code></pre>
+
+<p><strong>Use views for:</strong> Staging models, frequently-changed logic, models where freshness matters more than performance.</p>
+
+<h4>2. table</h4>
+<p>dbt creates a <strong>physical table</strong>. On each run, dbt drops the existing table and rebuilds it from scratch. Tables are fast to query but can take a long time to build if they scan large source data.</p>
+
+<div class="code-label">models/marts/core/dim_customers.sql</div>
+<pre><code class="language-sql">{{
+  config(
+    materialized = 'table',
+    tags         = ['core', 'daily']
+  )
+}}
+
+select
+    c.customer_id,
+    c.email,
+    coalesce(oh.lifetime_value, 0) as lifetime_value
+from {{ ref('stg_customers') }} c
+left join {{ ref('int_customer_order_history') }} oh using (customer_id)</code></pre>
+
+<p><strong>Use tables for:</strong> Mart models queried by BI tools, models that are expensive to re-compute on every query, anything downstream of complex joins.</p>
+
+<h4>3. incremental</h4>
+<p>The most powerful materialization. On the first run, builds the full table. On subsequent runs, <em>only processes new or changed rows</em>, then appends or merges them into the existing table. This makes large-table builds extremely fast.</p>
+
+<div class="code-label">models/marts/finance/fct_revenue_daily.sql</div>
+<pre><code class="language-sql">{{
+  config(
+    materialized         = 'incremental',
+    unique_key           = 'revenue_date',
+    incremental_strategy = 'merge'
+  )
+}}
+
+select
+    order_date                                              as revenue_date,
+    count(*)                                                as total_orders,
+    sum(case when is_completed then revenue else 0 end)     as gross_revenue
+from {{ ref('fct_orders') }}
+
+{% if is_incremental() %}
+    -- On incremental runs: only process the last 3 days
+    -- (covers late-arriving data)
+    where order_date >= (
+        select max(revenue_date) - interval '3 days'
+        from {{ this }}
+    )
+{% endif %}
+
+group by 1</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">The is_incremental() Filter Is Critical</div>
+  <p>Without <code>{% if is_incremental() %}</code>, your model will scan the entire source table on every run, defeating the purpose of incremental materialization. The filter tells dbt which source rows to process on incremental runs. On a full refresh (<code>dbt run --full-refresh</code>), <code>is_incremental()</code> evaluates to <code>false</code> and the filter is skipped.</p>
+</div>
+
+<h5>Incremental Strategies</h5>
+<table>
+  <thead><tr><th>Strategy</th><th>Behavior</th><th>Requires unique_key?</th><th>Best for</th></tr></thead>
+  <tbody>
+    <tr><td><code>append</code></td><td>INSERT new rows only, never update</td><td>No</td><td>Immutable event logs</td></tr>
+    <tr><td><code>merge</code></td><td>MERGE — upsert by unique_key</td><td>Yes</td><td>Fact tables with corrections</td></tr>
+    <tr><td><code>delete+insert</code></td><td>DELETE matching rows, then INSERT</td><td>Yes</td><td>Postgres/Redshift (no native MERGE)</td></tr>
+    <tr><td><code>insert_overwrite</code></td><td>Overwrite entire partitions</td><td>No</td><td>BigQuery/Spark partitioned tables</td></tr>
+  </tbody>
+</table>
+
+<h4>4. ephemeral</h4>
+<p>Ephemeral models are never materialized as objects in the warehouse. Instead, dbt inlines the model's SQL as a <strong>CTE</strong> inside any model that references it via <code>ref()</code>. They're invisible to BI tools but let you organize complex logic into named, reusable pieces.</p>
+
+<div class="code-label">models/intermediate/int_orders_with_payments.sql</div>
+<pre><code class="language-sql">-- No config block needed — configured as ephemeral in dbt_project.yml
+-- This entire model becomes a CTE in downstream models
+
+with orders as (
+    select * from {{ ref('stg_orders') }}
+),
+
+payments_agg as (
+    select
+        order_id,
+        max(case when is_successful then amount end) as payment_amount,
+        max(case when is_successful then payment_method end) as payment_method
+    from {{ ref('stg_payments') }}
+    group by 1
+)
+
+select
+    o.*,
+    coalesce(p.payment_amount, 0) as order_amount,
+    p.payment_method
+from orders o
+left join payments_agg p using (order_id)</code></pre>
+
+<p>When <code>fct_orders.sql</code> does <code>{{ ref('int_orders_with_payments') }}</code>, dbt inlines the above as a CTE. No separate database object is created.</p>
+
+<div class="concept-box">
+  <h4>Choosing the Right Materialization</h4>
+  <ul>
+    <li><strong>Staging</strong> → view (always fresh, small transformations)</li>
+    <li><strong>Intermediate</strong> → ephemeral (complex logic, not queried directly)</li>
+    <li><strong>Dimension tables</strong> → table (BI tools query these constantly)</li>
+    <li><strong>Fact tables, small-medium</strong> → table</li>
+    <li><strong>Fact tables, large / append-only</strong> → incremental</li>
+    <li><strong>Daily/hourly aggregations</strong> → incremental (only reprocess recent data)</li>
+  </ul>
+</div>
+
+<h3>Config Precedence</h3>
+<p>dbt resolves model configuration in this order (higher = wins):</p>
+<ol>
+  <li><strong>In-file <code>config()</code> block</strong> — highest priority</li>
+  <li><strong><code>dbt_project.yml</code></strong> — directory-level defaults</li>
+  <li><strong>dbt defaults</strong> — <code>view</code> if nothing is specified</li>
+</ol>
+
+<h3>Advanced Config Options</h3>
+<div class="code-label">sql</div>
+<pre><code class="language-sql">{{
+  config(
+    materialized        = 'table',
+    schema              = 'core',           -- override project.yml schema
+    alias               = 'orders',         -- table name (default: filename)
+    tags                = ['daily', 'pii'], -- for selection and governance
+    enabled             = true,             -- set false to skip a model
+    on_schema_change    = 'sync_all_columns', -- incremental: handle new cols
+    grants              = {'select': ['role_bi_reader']},  -- auto-grant
+    post_hook           = "analyze {{ this }}"  -- run SQL after build
+  )
+}}</code></pre>
+
+<div class="exercise-box">
+  <h4>Exercise 4 — Materializations</h4>
+  <p>In the companion repo, open <code>exercises/ch04/exercise.md</code> and complete all four exercises. The key one: change <code>stg_customers</code> to a table, run it twice, then change it back to a view. Use your warehouse's query history to see the compile/execute difference between the two materializations.</p>
+</div>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 5
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 05 · Core Concepts</div>
+  <h2>Sources, Seeds &amp; Freshness</h2>
+  <p>Declare your raw data's contract, load reference data, and alert when sources go stale.</p>
+</div>
+
+<h3>Sources: Declaring Your Raw Data Contract</h3>
+<p>Without source definitions, your models refer to raw tables with bare SQL like <code>FROM raw.customers</code>. If that table moves, renames, or has a schema change, you won't know until a model fails. Sources solve this by declaring raw tables as first-class dbt objects with their own docs, tests, and freshness checks.</p>
+
+<div class="code-label">models/staging/_sources.yml</div>
+<pre><code class="language-yaml">version: 2
+
+sources:
+  - name: shopstream_raw           # the name used in source() calls
+    description: "Raw data loaded from operational DB via Fivetran"
+    database: shopstream           # warehouse database (optional, defaults to profile)
+    schema: raw                    # the actual warehouse schema name
+    loader: fivetran
+    loaded_at_field: _fivetran_synced  # column used for freshness checks
+
+    freshness:
+      warn_after:  {count: 12, period: hour}
+      error_after: {count: 24, period: hour}
+
+    tables:
+      - name: customers
+        description: "One row per registered customer account"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: email
+            tests: [unique, not_null]
+
+      - name: orders
+        freshness:
+          warn_after: {count: 6, period: hour}  # override project-level freshness
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ['placed','processing','completed','returned','cancelled']</code></pre>
+
+<h4>Referencing Sources in Models</h4>
+<div class="code-label">models/staging/stg_customers.sql</div>
+<pre><code class="language-sql">with source as (
+    -- source() takes (source_name, table_name) — matches the yml above
+    select * from {{ source('shopstream_raw', 'customers') }}
+),
+
+renamed as (
+    select
+        id          as customer_id,
+        lower(email) as email,
+        is_active,
+        created_at,
+        updated_at
+    from source
+)
+
+select * from renamed</code></pre>
+
+<p>The <code>source()</code> function does two things <code>FROM raw.customers</code> cannot: it registers a lineage edge in the DAG (visible in dbt docs), and it lets dbt run freshness checks against the source.</p>
+
+<h3>Source Freshness</h3>
+<p>Run freshness checks independently from your models — typically in a separate scheduled job that runs every hour:</p>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt source freshness</code></pre>
+
+<p>dbt queries <code>max(_fivetran_synced)</code> for each source table and compares it to the current time. If data is stale, it warns or errors according to your thresholds — before your models even run.</p>
+
+<div class="diagram">
+dbt source freshness output:
+
+  shopstream_raw.customers    ✅  last loaded 2h ago   (warn at 12h, error at 24h)
+  shopstream_raw.orders       ⚠️  last loaded 8h ago   (warn at 6h — WARNING)
+  shopstream_raw.payments     ✅  last loaded 1h ago
+</div>
+
+<h3>Seeds: Loading Reference Data</h3>
+<p>Seeds are CSV files in your <code>seeds/</code> directory that dbt loads into the warehouse as tables. They're ideal for small, slowly-changing reference data that doesn't come from a source system:</p>
+
+<ul>
+  <li>Country code → country name mappings</li>
+  <li>Product category taxonomies</li>
+  <li>Marketing channel definitions</li>
+  <li>Test fixtures for development</li>
+</ul>
+
+<div class="code-label">seeds/country_codes.csv</div>
+<pre><code class="language-csv">code,name,region
+US,United States,North America
+UK,United Kingdom,Europe
+CA,Canada,North America
+AU,Australia,Asia Pacific
+DE,Germany,Europe
+SG,Singapore,Asia Pacific</code></pre>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt seed               # loads all seeds
+dbt seed --select country_codes   # loads one specific seed</code></pre>
+
+<p>Reference a seed in a model just like any other model using <code>ref()</code>:</p>
+<div class="code-label">sql</div>
+<pre><code class="language-sql">select
+    o.order_id,
+    o.shipping_country_code,
+    cc.name       as country_name,
+    cc.region
+from {{ ref('fct_orders') }} o
+left join {{ ref('country_codes') }} cc
+    on o.shipping_country_code = cc.code</code></pre>
+
+<h4>Configuring Seeds</h4>
+<div class="code-label">dbt_project.yml</div>
+<pre><code class="language-yaml">seeds:
+  shopstream:
+    +schema: seeds           # seeds land in a "seeds" schema
+    raw_customers:
+      +column_types:         # explicit type casting for CSV columns
+        id: integer
+        created_at: timestamp
+        is_active: boolean</code></pre>
+
+<div class="callout warning">
+  <div class="callout-title">Seeds Are Not for Large Data</div>
+  <p>Seeds are loaded by reading the CSV file and generating <code>INSERT</code> statements. This works fine for up to a few thousand rows, but is not designed for large datasets. If your reference data has 100k+ rows, load it through your EL pipeline instead and declare it as a source.</p>
+</div>
+
+<div class="concept-box">
+  <h4>Sources vs Seeds vs Models — When to Use Each</h4>
+  <table>
+    <thead><tr><th>Type</th><th>Where data comes from</th><th>How to reference</th></tr></thead>
+    <tbody>
+      <tr><td>Source</td><td>Loaded by your EL tool (Fivetran, etc.)</td><td><code>source('name', 'table')</code></td></tr>
+      <tr><td>Seed</td><td>CSV file in your <code>seeds/</code> directory</td><td><code>ref('seed_name')</code></td></tr>
+      <tr><td>Model</td><td>Built by dbt from sources/seeds</td><td><code>ref('model_name')</code></td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 6
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 06 · Core Concepts</div>
+  <h2>Testing &amp; Documentation</h2>
+  <p>Make your data trustworthy. Every assertion you don't write is a bug your stakeholders will find first.</p>
+</div>
+
+<h3>Why Testing Matters More Than You Think</h3>
+<p>The most dangerous data is data that looks correct but isn't. A <code>customer_id</code> that's accidentally duplicated, an <code>order_amount</code> that's negative because of a currency conversion bug, a <code>status</code> value that should be <code>'completed'</code> but a source system started writing <code>'COMPLETED'</code> — these are the issues that erode trust in your data platform. dbt tests catch them automatically, before they reach dashboards.</p>
+
+<h3>Generic Tests</h3>
+<p>dbt ships with four built-in generic tests that cover the most common data quality assertions:</p>
+
+<div class="code-label">models/staging/_staging.yml</div>
+<pre><code class="language-yaml">version: 2
+
+models:
+  - name: stg_orders
+    columns:
+      - name: order_id
+        tests:
+          - unique           # no duplicate order_ids
+          - not_null         # order_id can never be null
+
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['placed', 'processing', 'completed', 'returned', 'cancelled']
+
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:   # every customer_id must exist in stg_customers
+              to: ref('stg_customers')
+              field: customer_id</code></pre>
+
+<p>Run them:</p>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt test --select stg_orders
+# 4 tests run. PASS=4 WARN=0 ERROR=0</code></pre>
+
+<p>Under the hood, dbt compiles each test into a SQL query that returns rows only when the test <em>fails</em>. If zero rows are returned, the test passes. If any rows are returned, the test fails and dbt shows you the offending rows:</p>
+
+<div class="code-label">Compiled test SQL (generated by dbt)</div>
+<pre><code class="language-sql">-- unique test for stg_orders.order_id
+select
+    order_id,
+    count(*) as n
+from shopstream.staging.stg_orders
+group by order_id
+having count(*) > 1</code></pre>
+
+<h3>Singular Tests</h3>
+<p>Singular tests are custom SQL assertions you write yourself in the <code>tests/</code> directory. They're for business logic too specific for generic tests. Like generic tests, they must return <strong>zero rows to pass</strong>.</p>
+
+<div class="code-label">tests/assert_payments_match_order_items.sql</div>
+<pre><code class="language-sql">-- Assert: for every completed order, the successful payment amount
+-- must equal the sum of order item line totals (within 1 cent rounding tolerance)
+
+with order_item_totals as (
+    select order_id, sum(line_total_cents) as items_total_cents
+    from {{ ref('stg_order_items') }}
+    group by 1
+),
+
+payments as (
+    select order_id, amount_cents as payment_cents
+    from {{ ref('stg_payments') }}
+    where is_successful
+),
+
+orders as (
+    select order_id
+    from {{ ref('stg_orders') }}
+    where status = 'completed'
+)
+
+-- Return rows where there's a discrepancy greater than 1 cent
+select
+    o.order_id,
+    oi.items_total_cents,
+    p.payment_cents,
+    abs(oi.items_total_cents - p.payment_cents) as discrepancy_cents
+
+from orders o
+join order_item_totals oi using (order_id)
+join payments p using (order_id)
+
+where abs(oi.items_total_cents - p.payment_cents) > 1</code></pre>
+
+<h3>Custom Generic Tests</h3>
+<p>You can write your own reusable generic tests as macros. Any macro in <code>macros/</code> whose name starts with <code>test_</code> becomes a generic test:</p>
+
+<div class="code-label">macros/test_is_positive.sql</div>
+<pre><code class="language-sql">-- Custom generic test: assert all values in a column are positive (> 0)
+-- Usage in schema.yml:
+--   tests:
+--     - is_positive
+
+{% test is_positive(model, column_name) %}
+
+select *
+from {{ model }}
+where {{ column_name }} is not null
+  and {{ column_name }} <= 0
+
+{% endtest %}</code></pre>
+
+<div class="code-label">Apply it in _staging.yml</div>
+<pre><code class="language-yaml">- name: quantity
+  tests:
+    - not_null
+    - is_positive     # ← your custom generic test</code></pre>
+
+<h3>Test Configuration: Severity and Thresholds</h3>
+<p>Not all test failures are equally urgent. Configure severity per test:</p>
+
+<div class="code-label">_staging.yml</div>
+<pre><code class="language-yaml">- name: email
+  tests:
+    - unique:
+        severity: error     # fail the run (default)
+    - not_null:
+        severity: warn      # emit a warning but don't fail
+
+- name: revenue
+  tests:
+    - dbt_utils.expression_is_true:
+        expression: ">= 0"
+        severity: error
+        error_if: ">10"     # only error if MORE than 10 rows fail
+        warn_if:  ">0"      # warn if even 1 row fails</code></pre>
+
+<h3>Documentation</h3>
+<h4>Schema YAML Documentation</h4>
+<p>Document models and columns directly in your <code>.yml</code> files:</p>
+
+<div class="code-label">models/marts/core/_core.yml</div>
+<pre><code class="language-yaml">version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      Order fact table. One row per order (grain = order_id).
+      The primary table for revenue analysis. Revenue figures are in USD.
+    columns:
+      - name: order_id
+        description: Primary key. Surrogate from the source system.
+        tests: [unique, not_null]
+      - name: revenue
+        description: >
+          Order revenue in USD. Only populated for completed orders;
+          zero for cancelled or failed orders. Does NOT include returned orders.
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"</code></pre>
+
+<h4>Doc Blocks: Reusable Description Strings</h4>
+<p>For lengthy descriptions shared across multiple models, use doc blocks:</p>
+
+<div class="code-label">docs/metrics.md</div>
+<pre><code class="language-markdown">{% docs revenue %}
+Order revenue in USD. Calculated as the successful payment amount.
+Only populated for orders with status = 'completed'.
+Zero for cancelled or failed orders. Does NOT net out returns — use
+`net_revenue` (gross minus refunds) for financial reporting.
+{% enddocs %}</code></pre>
+
+<div class="code-label">Reference it in _core.yml</div>
+<pre><code class="language-yaml">- name: revenue
+  description: "{{ doc('revenue') }}"</code></pre>
+
+<h4>Generating and Serving Docs</h4>
+<div class="code-label">bash</div>
+<pre><code class="language-bash">dbt docs generate   # builds docs artifacts in target/
+dbt docs serve      # opens the docs site at http://localhost:8080</code></pre>
+
+<p>The generated documentation includes:</p>
+<ul>
+  <li>A searchable catalog of all models, sources, seeds, and tests</li>
+  <li>An interactive DAG diagram showing all dependencies</li>
+  <li>Column-level descriptions and test coverage</li>
+  <li>Compiled SQL for every model</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-title">Documentation Is a Test for Your Understanding</div>
+  <p>If you can't explain what a column means in plain English, you don't fully understand your data. Writing descriptions forces you to confront ambiguity and resolve it in the code. Teams that document their dbt models find bugs and missing business logic they never knew existed.</p>
+</div>
+
+<div class="exercise-box">
+  <h4>Exercise 6 — Tests &amp; Docs</h4>
+  <p>Open <code>exercises/ch06/exercise.md</code>. The key challenges: (1) write a singular test that asserts no customer has a negative lifetime value, (2) add a custom generic test <code>not_empty_string</code> and apply it to <code>stg_customers.email</code>, (3) run <code>dbt docs serve</code> and find the DAG for <code>fct_orders</code>.</p>
+</div>
+
+</div><!-- /page -->
+
+
+<!-- ═══════════════════════════════════════════════
+     CHAPTER 7
+═══════════════════════════════════════════════ -->
+<div class="page">
+<div class="chapter-header">
+  <div class="chapter-label">Chapter 07 · Core Concepts</div>
+  <h2>The DAG, ref() &amp; Lineage</h2>
+  <p>How dbt builds a dependency graph from your code and why ref() is the single most important function in dbt.</p>
+</div>
+
+<h3>The DAG (Directed Acyclic Graph)</h3>
+<p>Every time you run dbt, it builds a DAG of your models — a graph where nodes are models and edges are dependencies (established by <code>ref()</code> calls). dbt uses this graph to:</p>
+<ul>
+  <li>Determine execution order (parents always run before children)</li>
+  <li>Run models in parallel where the graph allows</li>
+  <li>Determine what's affected by a change (impact analysis)</li>
+  <li>Generate the lineage visualization in docs</li>
+</ul>
+
+<div class="diagram">
+ShopStream DAG:
+
+  source: raw.customers ──────────► stg_customers ─────────────────────┐
+                                                                        │
+  source: raw.orders ─────────────► stg_orders ──► int_orders_with_    │
+                                                    payments ──────────►│ fct_orders
+  source: raw.payments ───────────► stg_payments ──┘                   │
+                                                         dim_customers ─┘
+  source: raw.order_items ─────────► stg_order_items ──────────────────►┘
+
+  fct_orders ──────────────────────────────────────────► fct_revenue_daily
+</div>
+
+<h3>The ref() Function</h3>
+<p><code>ref()</code> is how you reference another model. It's the mechanism that creates DAG edges and should be used <em>every time</em> you reference a model — never hardcode schema-qualified table names.</p>
+
+<div class="code-label">sql</div>
+<pre><code class="language-sql">-- ❌ Wrong — hardcodes schema, breaks in dev/prod, creates no DAG edge
+select * from analytics.fct_orders
+
+-- ✅ Correct — environment-aware, creates DAG edge, enables lineage
+select * from {{ ref('fct_orders') }}</code></pre>
+
+<p>What <code>ref()</code> actually does at compile time:</p>
+<ol>
+  <li>Looks up the model's configured schema (respecting environment and generate_schema_name)</li>
+  <li>Replaces <code>{{ ref('fct_orders') }}</code> with the fully-qualified table name: <code>shopstream.core.fct_orders</code></li>
+  <li>Registers a dependency edge in the DAG</li>
+</ol>
+
+<h4>Cross-Project ref (Advanced)</h4>
+<p>In multi-project dbt setups (dbt Mesh), you can ref models from other projects:</p>
+<div class="code-label">sql</div>
+<pre><code class="language-sql">-- Reference a model from another dbt project
+select * from {{ ref('finance_dbt', 'fct_gl_entries') }}</code></pre>
+
+<h3>Execution Order and Parallelism</h3>
+<p>dbt processes the DAG in topological order with configurable parallelism. Models at the same "level" with no dependencies between them run simultaneously:</p>
+
+<div class="diagram">
+Run order with threads=4:
+
+  Round 1 (parallel): stg_customers, stg_orders, stg_payments, stg_order_items
+                       (all sources → no deps between them)
+
+  Round 2 (parallel): int_orders_with_payments, int_customer_order_history
+                       (both need staging models — run after round 1)
+
+  Round 3 (parallel): dim_customers, fct_orders
+                       (need intermediate models)
+
+  Round 4:            fct_revenue_daily
+                       (needs fct_orders)
+</code></pre>
+
+<p>Set <code>threads</code> in your profile to control max parallelism. More threads = faster builds, but more warehouse concurrency load.</p>
+
+<h3>Model Selection and the DAG</h3>
+<p>The <code>--select</code> syntax uses the DAG for powerful targeting:</p>
+
+<div class="code-label">bash</div>
+<pre><code class="language-bash"># Run only models upstream of fct_orders (its ancestors)
+dbt run --select +fct_orders
+
+# Run fct_orders and everything downstream of it
+dbt run --select fct_orders+
+
+# Run everything between stg_orders and fct_orders inclusive
+dbt run --select stg_orders+fct_orders   # path through the DAG
+
+# Run changed models and all their descendants (Slim CI pattern)
+dbt run --select state:modified+
+
+# Intersection: models tagged "daily" that are also downstream of stg_orders
+dbt run --select tag:daily,+stg_orders</code></pre>
+
+<h3>this: Referencing the Current Model</h3>
+<p>In incremental models, you need to reference the model's own current state to compute the filter. The <code>this</code> variable provides this:</p>
+
+<div class="code-label">sql</div>
+<pre><code class="language-sql">{% if is_incremental() %}
+    where order_date >= (
+        select max(order_date) - interval '3 days'
+        from {{ this }}    -- refers to the currently-existing fct_revenue_daily table
+    )
+{% endif %}</code></pre>
+
+</div><!-- /page -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>
