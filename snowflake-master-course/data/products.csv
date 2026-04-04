@@ -1,0 +1,16 @@
+product_id,product_name,category,price,sku,is_active
+PROD_001,Sony WH-1000XM5 Wireless Headphones,Audio,349.99,SNY-WH1000XM5-BLK,true
+PROD_002,Apple MacBook Pro 14-inch M3,Computers,1249.00,APL-MBP14-M3-512,true
+PROD_003,Dell UltraSharp 32 4K Monitor,Computers,699.99,DLL-U3223QE,true
+PROD_004,Garmin Forerunner 265 Smartwatch,Wearables,449.99,GRM-FR265-BLK,true
+PROD_005,Amazon Echo Dot (5th Gen),Smart Home,49.99,AMZ-ECHODOT5-CHR,true
+PROD_006,Logitech MX Master 3S Mouse,Computers,99.99,LGT-MXMSTR3S-GRY,true
+PROD_007,Kindle Paperwhite (16 GB),Books & Media,139.99,KDL-PW16-BLK,true
+PROD_008,Instant Pot Duo 7-in-1 (6 Qt),Home & Kitchen,79.95,INP-DUO60-SS,true
+PROD_009,Fitbit Charge 6 Fitness Tracker,Wearables,149.95,FTB-CHRG6-BLK,true
+PROD_010,Bose QuietComfort Ultra Earbuds,Audio,249.00,BSE-QCUE-BLK,true
+PROD_011,Anker USB-C 65W Charger,Electronics,34.99,ANK-A2669-BLK,true
+PROD_012,Hydro Flask 32 oz Water Bottle,Sports & Outdoors,44.95,HF-32OZ-PAC-BLU,true
+PROD_013,Nike Air Zoom Pegasus 41 (M),Footwear,130.00,NKE-AZP41-M-10,true
+PROD_014,Patagonia Nano Puff Jacket (M),Clothing,199.00,PAT-NPJ-FRG-M,true
+PROD_015,Theragun Prime Massage Gun,Health & Beauty,199.00,TRG-PRIME-BLK,false
