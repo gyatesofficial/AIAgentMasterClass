@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: agents-postgres
+    environment:
+      POSTGRES_USER: agents_user
+      POSTGRES_PASSWORD: agents_password
+      POSTGRES_DB: agents_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agents_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: agents-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: agents-chromadb
+    ports:
+      - "8000:8000"
+    environment:
+      IS_PERSISTENT: "true"
+      PERSIST_DIRECTORY: "/chroma_data"
+      CHROMA_SERVER_AUTH_PROVIDER: ""
+    volumes:
+      - chromadb_data:/chroma_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  chromadb_data:
+
+networks:
+  default:
+    name: agents-network

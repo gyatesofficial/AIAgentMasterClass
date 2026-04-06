@@ -1,0 +1,567 @@
+[
+  {
+    "id": "e4938406-6126-4048-a739-f15b38377925",
+    "title": "How to Reset Your Password",
+    "category": "account_access",
+    "tags": [
+      "password",
+      "reset",
+      "login",
+      "forgot"
+    ],
+    "content": "## How to Reset Your Password\n\nIf you've forgotten your password or need to reset it for security reasons, follow these steps:\n\n### Steps to Reset Your Password\n1. Go to the login page and click **\"Forgot Password\"**\n2. Enter the email address associated with your account\n3. Check your inbox for a password reset email (check spam if not received within 5 minutes)\n4. Click the secure link in the email — it expires after 24 hours\n5. Enter and confirm your new password\n6. Log in with your new password\n\n### Password Requirements\n- Minimum 8 characters\n- At least one uppercase letter\n- At least one number or special character\n\n### Didn't Receive the Email?\n- Check your spam/junk folder\n- Ensure you're using the email address on your account\n- Add noreply@ourplatform.com to your contacts\n- Wait 5 minutes and try again\n- Contact support if still not received after 15 minutes\n\n### Locked Out?\nIf your account is locked after too many failed attempts, it will automatically unlock after 30 minutes. Contact support for immediate assistance.",
+    "embedding_id": null,
+    "created_at": "2026-01-11T20:45:47.899070+00:00",
+    "word_count": 181
+  },
+  {
+    "id": "503348f4-92e5-4825-941c-f094a965c783",
+    "title": "Setting Up Two-Factor Authentication (2FA)",
+    "category": "account_access",
+    "tags": [
+      "2fa",
+      "authenticator",
+      "security",
+      "mfa"
+    ],
+    "content": "## Setting Up Two-Factor Authentication (2FA)\n\nTwo-factor authentication adds an extra layer of security to your account.\n\n### Supported 2FA Methods\n- **Authenticator App** (recommended): Google Authenticator, Authy, 1Password\n- **SMS**: Text message to your phone number\n- **Email OTP**: One-time code to your email\n\n### Setting Up an Authenticator App\n1. Go to **Account Settings → Security**\n2. Click **Enable Two-Factor Authentication**\n3. Choose **Authenticator App**\n4. Scan the QR code with your authenticator app\n5. Enter the 6-digit code from the app to confirm\n6. **Save your backup codes** in a secure location\n\n### If You Lost Access to Your Authenticator\n1. Use one of your backup codes to log in\n2. Go to Security Settings and disable 2FA\n3. Re-enable 2FA with your new device\n\n### If You Lost Both the App and Backup Codes\nContact support with:\n- Proof of identity (government ID)\n- Account ownership verification (last payment method)\nWe can manually disable 2FA within 1 business day.",
+    "embedding_id": null,
+    "created_at": "2026-01-20T09:45:47.899086+00:00",
+    "word_count": 163
+  },
+  {
+    "id": "659bc0ef-7719-43f5-a14b-5206762a6018",
+    "title": "Troubleshooting Login Issues",
+    "category": "account_access",
+    "tags": [
+      "login",
+      "access",
+      "troubleshooting",
+      "credentials"
+    ],
+    "content": "## Troubleshooting Login Issues\n\n### Common Login Problems and Solutions\n\n**\"Invalid email or password\" error**\n- Double-check you're using the correct email address\n- Passwords are case-sensitive — check Caps Lock\n- Try copy-pasting instead of typing\n- Reset your password if unsure\n\n**Account locked**\n- Wait 30 minutes for automatic unlock\n- Contact support for immediate unlock\n\n**SSO (Single Sign-On) not working**\n- Contact your IT administrator — this is usually a configuration issue\n- Ensure you're using your company email address\n- Check if your company's SSO provider has an outage\n\n**\"Too many requests\" error**\n- Wait 5 minutes and try again\n- This is a rate limit to prevent brute force attacks\n\n**Browser issues**\n- Clear browser cache and cookies\n- Try an incognito/private window\n- Try a different browser (Chrome, Firefox, Safari, Edge)\n- Disable browser extensions temporarily\n\n### Still Having Issues?\nContact support with:\n- Your account email address\n- The exact error message you're seeing\n- Browser and operating system version\n- Screenshot of the error if possible",
+    "embedding_id": null,
+    "created_at": "2025-11-09T10:45:47.899097+00:00",
+    "word_count": 174
+  },
+  {
+    "id": "224c661e-3d6b-437b-9d4b-c61f5c646844",
+    "title": "Managing Team Members and Permissions",
+    "category": "account_access",
+    "tags": [
+      "team",
+      "members",
+      "permissions",
+      "invite",
+      "roles"
+    ],
+    "content": "## Managing Team Members and Permissions\n\n### Inviting New Team Members\n1. Go to **Settings → Team Members**\n2. Click **Invite Member**\n3. Enter their email address\n4. Select their role (see below)\n5. Click **Send Invitation**\n\nThe invitation link expires after 7 days.\n\n### Team Roles\n| Role | Description |\n|------|-------------|\n| Owner | Full access, billing control, can delete account |\n| Admin | Full access except billing and account deletion |\n| Editor | Create and edit content, cannot manage team |\n| Viewer | Read-only access |\n\n### Removing Team Members\n1. Go to **Settings → Team Members**\n2. Find the member\n3. Click the three-dot menu → **Remove**\n4. Removed members lose access immediately\n\n### Resending Invitations\nIf an invitation expired, go to **Settings → Pending Invitations** and click **Resend**.\n\n### Plan Limits\n- Free: 1 member\n- Starter: 5 members\n- Pro: 25 members\n- Enterprise: Unlimited",
+    "embedding_id": null,
+    "created_at": "2025-11-23T21:45:47.899108+00:00",
+    "word_count": 154
+  },
+  {
+    "id": "f46500ed-1f3c-4683-8cbd-118570543d21",
+    "title": "Understanding SSO Configuration",
+    "category": "account_access",
+    "tags": [
+      "sso",
+      "saml",
+      "okta",
+      "azure",
+      "enterprise"
+    ],
+    "content": "## Single Sign-On (SSO) Configuration Guide\n\nSSO is available on Enterprise plans. Supported providers: Okta, Azure AD, Google Workspace, and any SAML 2.0 provider.\n\n### Initial Setup (Enterprise Admins)\n1. Go to **Settings → Security → SSO**\n2. Select your identity provider\n3. Download our SAML metadata or copy the Entity ID and ACS URL\n4. Configure in your identity provider using our metadata\n5. Enter your identity provider's metadata URL or upload their metadata XML\n6. Test the connection using the **Test SSO** button\n7. Enable for all users or specific groups\n\n### Troubleshooting SSO\n- **\"SAML assertion expired\"**: Check that server times are synchronized (NTP)\n- **\"User not found\"**: Ensure the email in the SAML assertion matches an account\n- **\"Invalid signature\"**: Re-download and re-upload certificates\n- **\"Redirect loop\"**: Clear cookies and try again\n\n### Emergency Access\nIf SSO is broken, owners can use email/password login at `/login?bypass-sso=true` (uses magic link).",
+    "embedding_id": null,
+    "created_at": "2026-03-11T14:45:47.899118+00:00",
+    "word_count": 153
+  },
+  {
+    "id": "856cc5b2-f024-466b-8940-972bb4220323",
+    "title": "Understanding Your Invoice",
+    "category": "billing",
+    "tags": [
+      "invoice",
+      "billing",
+      "receipt",
+      "charges"
+    ],
+    "content": "## Understanding Your Invoice\n\n### Invoice Sections\n- **Subscription**: Your base plan cost (billed monthly or annually)\n- **Usage**: Any metered usage above your plan limits\n- **Tax**: Applicable sales tax based on your billing address\n- **Discounts**: Any promo codes or loyalty discounts applied\n\n### Billing Dates\nYour billing date is the date you originally subscribed. Annual plans are billed once per year on that date.\n\n### How to Download Invoices\n1. Go to **Settings → Billing**\n2. Click **Billing History**\n3. Click the download icon next to any invoice\n\n### VAT/GST Invoices\nIf you need a tax invoice for business purposes:\n1. Go to **Settings → Billing → Tax Information**\n2. Enter your VAT/GST number and business address\n3. Future invoices will include this information\n4. Contact support to reissue past invoices\n\n### Currency\nWe bill in USD by default. Enterprise customers can request local currency billing. Exchange rates are fixed at the start of each annual term.",
+    "embedding_id": null,
+    "created_at": "2025-12-20T17:45:47.899128+00:00",
+    "word_count": 160
+  },
+  {
+    "id": "2111d887-1e75-4f79-8177-40037d88b10a",
+    "title": "How Billing Works: Plans and Upgrades",
+    "category": "billing",
+    "tags": [
+      "upgrade",
+      "downgrade",
+      "plan",
+      "pricing"
+    ],
+    "content": "## How Billing Works: Plans and Upgrades\n\n### Plan Overview\n| Plan | Monthly | Annual | Users | Features |\n|------|---------|--------|-------|----------|\n| Free | $0 | $0 | 1 | Basic features |\n| Starter | $29 | $290 | 5 | + Integrations |\n| Pro | $79 | $790 | 25 | + Advanced analytics |\n| Enterprise | Custom | Custom | Unlimited | + SLA, SSO, custom |\n\n### Upgrading Your Plan\n1. Go to **Settings → Billing → Change Plan**\n2. Select the new plan\n3. Confirm the change\n\nWhen you upgrade mid-cycle, you're charged the prorated difference immediately.\n\n### Downgrading Your Plan\nDowngrades take effect at the end of your current billing cycle. You keep your current features until then.\n\nIf downgrading would put you over the new plan's limits (e.g., too many users), you'll need to reduce usage first.\n\n### Annual vs Monthly Billing\nAnnual billing saves ~17% compared to monthly. You can switch from monthly to annual at any time — we'll credit unused monthly days.\n\n### Free Trial\nNew accounts get 14 days free on the Pro plan. No credit card required. After the trial, you'll move to Free unless you add payment details.",
+    "embedding_id": null,
+    "created_at": "2026-01-23T22:45:47.899137+00:00",
+    "word_count": 204
+  },
+  {
+    "id": "8d0cda3c-5a27-45e3-8ad8-86a55abab4da",
+    "title": "Requesting a Refund",
+    "category": "billing",
+    "tags": [
+      "refund",
+      "cancel",
+      "money back",
+      "charge"
+    ],
+    "content": "## Requesting a Refund\n\n### Refund Policy\n- **Annual plans**: Refundable within 30 days of purchase (prorated for usage)\n- **Monthly plans**: Current month is non-refundable; cancel to stop future charges\n- **Duplicate charges**: Refunded immediately upon verification\n- **Accidental upgrades**: Refundable within 48 hours\n\n### How to Request a Refund\nContact support with:\n1. Your account email\n2. The charge amount and date\n3. Reason for the refund request\n4. For duplicate charges: last 4 digits of the card charged\n\n### Processing Time\n- Credit/debit cards: 5-10 business days\n- PayPal: 3-5 business days\n- Wire transfer: 10-15 business days\n\n### Cancellation\nTo stop future charges, cancel your subscription before the next renewal date:\n1. Go to **Settings → Billing → Cancel Subscription**\n2. Select a reason (optional)\n3. Confirm cancellation\n\nYour access continues until the end of the paid period.",
+    "embedding_id": null,
+    "created_at": "2026-03-02T20:45:47.899148+00:00",
+    "word_count": 142
+  },
+  {
+    "id": "852e9081-2d2c-4fe0-8ebf-7e4f4a370818",
+    "title": "Payment Methods and Updating Billing Info",
+    "category": "billing",
+    "tags": [
+      "payment",
+      "credit card",
+      "update",
+      "billing"
+    ],
+    "content": "## Payment Methods and Updating Billing Info\n\n### Accepted Payment Methods\n- Credit/debit cards: Visa, Mastercard, American Express, Discover\n- PayPal (monthly plans only)\n- Wire transfer (Enterprise annual plans only)\n- Purchase orders (Enterprise only)\n\n### Updating Your Credit Card\n1. Go to **Settings → Billing → Payment Method**\n2. Click **Update Card**\n3. Enter new card details\n4. Click **Save**\n\nChanges take effect on the next billing cycle. Past invoices remain unchanged.\n\n### Failed Payment Recovery\nIf a payment fails:\n1. You'll receive an email notification\n2. We retry the charge after 3 days\n3. If the second attempt fails, we retry after 7 more days\n4. After 3 failed attempts, your account is suspended\n\nDuring suspension, your data is retained for 30 days while you update payment.\n\n### PCI Compliance\nWe never store card numbers. Payments are processed by Stripe, a PCI DSS Level 1 certified processor.",
+    "embedding_id": null,
+    "created_at": "2026-03-02T11:45:47.899157+00:00",
+    "word_count": 150
+  },
+  {
+    "id": "8bcb5768-18db-4942-bf69-e71aa41ffbb9",
+    "title": "Troubleshooting Export Issues",
+    "category": "technical_bug",
+    "tags": [
+      "export",
+      "csv",
+      "download",
+      "data"
+    ],
+    "content": "## Troubleshooting Export Issues\n\n### Common Export Problems\n\n**Empty file downloaded**\n1. Ensure there is data matching your current filters\n2. Try removing filters and exporting all data\n3. Clear browser cache and try again\n4. Try a different browser\n5. Check if a popup blocker is preventing the download\n\n**Export takes too long or times out**\n- Large exports (>10,000 rows) are processed in the background\n- You'll receive an email with a download link when ready\n- Download links expire after 24 hours\n\n**Wrong data in export**\n- Verify the date range and filters before exporting\n- Some fields may use internal IDs — refer to the API docs for field mappings\n- Timestamps are in UTC by default\n\n**CSV encoding issues**\n- Open with Excel: Data → From Text/CSV → select UTF-8 encoding\n- Use Google Sheets which handles UTF-8 automatically\n\n### Supported Export Formats\n- CSV (all plans)\n- JSON (Pro and above)\n- Excel/XLSX (Pro and above)\n- PDF reports (Enterprise)\n\n### Export Limits\n- Free: 1,000 rows\n- Starter: 10,000 rows\n- Pro: 100,000 rows\n- Enterprise: Unlimited (background processing)",
+    "embedding_id": null,
+    "created_at": "2026-02-25T20:45:47.899166+00:00",
+    "word_count": 186
+  },
+  {
+    "id": "5d777c0a-99af-4095-8979-ed948fab7937",
+    "title": "API Error Code Reference",
+    "category": "technical_bug",
+    "tags": [
+      "api",
+      "error",
+      "500",
+      "400",
+      "integration"
+    ],
+    "content": "## API Error Code Reference\n\n### HTTP Status Codes\n\n| Code | Meaning | Common Causes |\n|------|---------|---------------|\n| 400 | Bad Request | Invalid parameters, missing required fields |\n| 401 | Unauthorized | Missing or invalid API key |\n| 403 | Forbidden | API key lacks permission for this endpoint |\n| 404 | Not Found | Resource doesn't exist or was deleted |\n| 429 | Too Many Requests | Rate limit exceeded |\n| 500 | Internal Server Error | Temporary server issue |\n| 503 | Service Unavailable | Planned maintenance or incident |\n\n### Rate Limits\n| Plan | Requests/minute | Requests/day |\n|------|-----------------|--------------|\n| Free | 30 | 1,000 |\n| Starter | 100 | 10,000 |\n| Pro | 500 | 100,000 |\n| Enterprise | Custom | Custom |\n\n### Handling 429 Rate Limits\nImplement exponential backoff:\n```python\nimport time\nimport random\n\ndef api_request_with_retry(url, max_retries=5):\n    for attempt in range(max_retries):\n        response = make_request(url)\n        if response.status_code == 429:\n            wait = (2 ** attempt) + random.random()\n            time.sleep(wait)\n        else:\n            return response\n```\n\n### Handling 500 Errors\n- 500s are transient — retry with backoff\n- If consistently failing, check our status page\n- Include the `X-Request-ID` header value when contacting support",
+    "embedding_id": null,
+    "created_at": "2026-01-12T11:45:47.899176+00:00",
+    "word_count": 207
+  },
+  {
+    "id": "ce6dc5bf-74f1-4fe4-b024-ab3bf1361861",
+    "title": "Browser Compatibility and Troubleshooting",
+    "category": "technical_bug",
+    "tags": [
+      "browser",
+      "chrome",
+      "firefox",
+      "safari",
+      "compatibility"
+    ],
+    "content": "## Browser Compatibility and Troubleshooting\n\n### Supported Browsers\n| Browser | Minimum Version |\n|---------|-----------------|\n| Chrome | 90+ |\n| Firefox | 88+ |\n| Safari | 14+ |\n| Edge | 90+ |\n\nInternet Explorer is not supported.\n\n### General Troubleshooting Steps\n1. **Hard refresh**: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)\n2. **Clear cache and cookies**:\n   - Chrome: Settings → Privacy → Clear browsing data\n   - Firefox: Settings → Privacy → Clear Data\n   - Safari: Develop menu → Empty Caches\n3. **Try incognito/private mode** to rule out extension conflicts\n4. **Disable extensions** temporarily (especially ad blockers)\n5. **Check browser console** (F12 → Console) for error messages\n\n### Common Issues\n\n**Blank/white page**\n- Usually a JavaScript error — check console for details\n- Disable extensions, especially ad blockers and script blockers\n\n**Infinite loading spinner**\n- Check network status (F12 → Network tab)\n- If requests are failing, may be a firewall/proxy issue\n\n**Features not working properly**\n- Enable JavaScript and cookies\n- Ensure browser is updated to latest version\n\n### Corporate Networks\nSome corporate firewalls block certain CDN domains. Whitelist:\n- `*.ourplatform.com`\n- `*.cloudfront.net`\n- `*.stripe.com` (for billing)",
+    "embedding_id": null,
+    "created_at": "2025-10-13T06:45:47.899187+00:00",
+    "word_count": 188
+  },
+  {
+    "id": "bae6bc2d-53e5-406a-a490-c084601c0eba",
+    "title": "Mobile App Troubleshooting",
+    "category": "technical_bug",
+    "tags": [
+      "mobile",
+      "ios",
+      "android",
+      "app",
+      "crash"
+    ],
+    "content": "## Mobile App Troubleshooting\n\n### Supported OS Versions\n- iOS: 15.0 and above\n- Android: 9.0 (API 28) and above\n\n### Common Issues\n\n**App crashes on startup**\n1. Force-close the app and reopen\n2. Check for updates in the App Store / Google Play\n3. Restart your device\n4. Uninstall and reinstall the app\n5. Ensure you have at least 500MB free storage\n\n**Can't log in on mobile**\n- Ensure you're entering the correct email (no extra spaces from autocomplete)\n- Try logging in from the web to verify credentials\n- If using Face ID/Touch ID, go to Settings → Biometrics and re-enable\n\n**Notifications not arriving**\n- Check notification permissions: Device Settings → App Name → Notifications → Allow\n- Ensure Do Not Disturb is not enabled\n- Go to app Settings → Notifications and verify preferences\n\n**Sync issues / outdated data**\n- Pull down to refresh in any list view\n- Go to Settings → Account → Force Sync\n\n**Push notifications duplicated**\n- Log out and log back in to refresh the device token",
+    "embedding_id": null,
+    "created_at": "2025-11-30T14:45:47.899198+00:00",
+    "word_count": 175
+  },
+  {
+    "id": "433f982a-6752-4816-9dc2-cf583d50b82b",
+    "title": "Getting Started: Quick Setup Guide",
+    "category": "general_inquiry",
+    "tags": [
+      "getting started",
+      "setup",
+      "onboarding",
+      "new user"
+    ],
+    "content": "## Getting Started: Quick Setup Guide\n\nWelcome! Here's how to get up and running in 10 minutes.\n\n### Step 1: Complete Your Profile\n1. Click your avatar in the top right\n2. Go to **Profile Settings**\n3. Add your name, photo, and timezone\n4. Save changes\n\n### Step 2: Set Up Your Workspace\n1. Go to **Settings → General**\n2. Name your workspace\n3. Upload a logo (optional)\n4. Set your timezone\n\n### Step 3: Connect Integrations\n1. Go to **Settings → Integrations**\n2. Connect your email (Gmail, Outlook)\n3. Connect Slack for notifications\n4. Connect your CRM if applicable\n\n### Step 4: Invite Your Team\n1. Go to **Settings → Team**\n2. Click **Invite Members**\n3. Enter email addresses and assign roles\n\n### Step 5: Import Your Data\n1. Use **File → Import** for CSV imports\n2. Or use our API for bulk imports\n3. See the import guide for field mappings\n\n### Helpful Resources\n- [Video tutorials](https://help.ourplatform.com/videos)\n- [API documentation](https://api.ourplatform.com/docs)\n- [Community forum](https://community.ourplatform.com)",
+    "embedding_id": null,
+    "created_at": "2025-11-07T22:45:47.899208+00:00",
+    "word_count": 165
+  },
+  {
+    "id": "c3cd144c-d212-472a-b1c4-0a1201c78cf5",
+    "title": "Data Privacy and GDPR Compliance",
+    "category": "general_inquiry",
+    "tags": [
+      "gdpr",
+      "privacy",
+      "data",
+      "compliance",
+      "security"
+    ],
+    "content": "## Data Privacy and GDPR Compliance\n\n### Our Commitment to Privacy\nWe are fully GDPR compliant and take data privacy seriously. Our DPA (Data Processing Agreement) is available upon request.\n\n### Data Storage\n- All data is stored in EU data centers (AWS eu-west-1) by default\n- US region available for Enterprise customers\n- Data is encrypted at rest (AES-256) and in transit (TLS 1.3)\n\n### Data Retention\n| Scenario | Retention Period |\n|----------|-----------------|\n| Active accounts | Indefinitely |\n| After account deletion | 30 days (then permanently deleted) |\n| Backup data | 90 days |\n| Audit logs | 12 months |\n\n### Your Rights\nUnder GDPR, you have the right to:\n- **Access**: Request a copy of all your data\n- **Erasure**: Request deletion of your data\n- **Portability**: Export your data in machine-readable format\n- **Rectification**: Correct inaccurate data\n- **Objection**: Object to certain types of processing\n\n### Exercising Your Rights\nGo to **Settings → Privacy** or contact privacy@ourplatform.com.\n\n### Security Measures\n- SOC 2 Type II certified\n- Annual penetration testing\n- Bug bounty program\n- 24/7 security monitoring",
+    "embedding_id": null,
+    "created_at": "2026-01-25T22:45:47.899217+00:00",
+    "word_count": 186
+  },
+  {
+    "id": "d0c559ca-e875-4981-9bde-e7d30e89c409",
+    "title": "Enterprise Plan: Features and Onboarding",
+    "category": "general_inquiry",
+    "tags": [
+      "enterprise",
+      "plan",
+      "features",
+      "sla",
+      "custom"
+    ],
+    "content": "## Enterprise Plan: Features and Onboarding\n\n### Enterprise Features\n- **Unlimited users** with advanced role management\n- **SSO/SAML**: Okta, Azure AD, Google Workspace, any SAML 2.0 provider\n- **Dedicated support**: Named support engineer, 4-hour SLA\n- **Custom rate limits** for API usage\n- **Data residency**: Choose EU or US storage\n- **Audit logs**: Full activity log with export\n- **Custom contract**: MSA, DPA, custom terms\n- **HIPAA BAA**: Available for healthcare customers\n- **SLA guarantee**: 99.9% uptime with financial credits\n\n### Pricing\nEnterprise pricing is custom based on:\n- Number of users\n- API usage volume\n- Contract length (annual minimum)\n- Additional features needed\n\n### Onboarding Process\n1. **Discovery call** (30 min): Understand your needs\n2. **Technical review** (60 min): Architecture review with our solutions engineer\n3. **Security review**: Share our SOC2 report and complete your security questionnaire\n4. **Pilot** (2 weeks): Full-access trial for your team\n5. **Contract and migration**: Data migration assistance included\n\n### Getting Started\nContact enterprise@ourplatform.com or book a call through the website. We typically respond within 2 hours on business days.",
+    "embedding_id": null,
+    "created_at": "2025-12-19T06:45:47.899228+00:00",
+    "word_count": 177
+  },
+  {
+    "id": "e5fd6e2e-7e57-4aa5-9437-2dab85c11dc9",
+    "title": "API Authentication and Getting Started",
+    "category": "general_inquiry",
+    "tags": [
+      "api",
+      "authentication",
+      "token",
+      "developer",
+      "integration"
+    ],
+    "content": "## API Authentication and Getting Started\n\n### API Base URL\n```\nhttps://api.ourplatform.com/v2\n```\n\n### Authentication\nAll API requests require an API key in the Authorization header:\n```http\nAuthorization: Bearer YOUR_API_KEY\n```\n\n### Getting Your API Key\n1. Go to **Settings → API Keys**\n2. Click **Generate New Key**\n3. Give it a descriptive name (e.g., \"Production Integration\")\n4. Copy the key immediately — it's only shown once\n5. Store it securely (use a secrets manager in production)\n\n### Quick Start Example\n```python\nimport requests\n\nAPI_KEY = \"your_api_key_here\"\nBASE_URL = \"https://api.ourplatform.com/v2\"\n\nheaders = {\"Authorization\": f\"Bearer {API_KEY}\"}\n\n# Get all records\nresponse = requests.get(f\"{BASE_URL}/records\", headers=headers)\ndata = response.json()\nprint(data)\n```\n\n### API Documentation\nFull interactive documentation available at: https://api.ourplatform.com/docs\n\n### Webhooks\nReceive real-time notifications for events:\n1. Go to **Settings → Webhooks**\n2. Enter your endpoint URL\n3. Select events to subscribe to\n4. We'll send a POST request with a JSON payload for each event\n\n### SDKs Available\n- Python: `pip install ourplatform-sdk`\n- JavaScript/Node.js: `npm install @ourplatform/sdk`\n- Ruby, PHP, Go: Coming soon",
+    "embedding_id": null,
+    "created_at": "2025-12-10T16:45:47.899283+00:00",
+    "word_count": 173
+  },
+  {
+    "id": "1c429b9c-4e35-4f28-a4bb-dfd4863984df",
+    "title": "How to Use the Search Feature",
+    "category": "general_inquiry",
+    "tags": [
+      "search",
+      "filter",
+      "find"
+    ],
+    "content": "Use the search bar at the top of any page to search across all your data. Use filters to narrow results by date, type, status, and more. Supports full-text search and exact phrase matching with quotes.",
+    "embedding_id": null,
+    "created_at": "2025-10-24T16:45:47.899294+00:00",
+    "word_count": 36
+  },
+  {
+    "id": "f6bd31b7-713d-4664-9b2d-9f8b86fcd644",
+    "title": "Keyboard Shortcuts Reference",
+    "category": "general_inquiry",
+    "tags": [
+      "keyboard",
+      "shortcuts",
+      "productivity"
+    ],
+    "content": "Press ? on any page to view keyboard shortcuts. Common shortcuts: Ctrl/Cmd+K (quick search), Ctrl/Cmd+N (new item), Ctrl/Cmd+S (save), Escape (close modal/dialog).",
+    "embedding_id": null,
+    "created_at": "2025-12-22T02:45:47.899300+00:00",
+    "word_count": 22
+  },
+  {
+    "id": "136b314e-c85d-4ccc-9005-f3b6417a03cf",
+    "title": "Exporting Your Data Before Cancellation",
+    "category": "billing",
+    "tags": [
+      "export",
+      "cancel",
+      "data portability",
+      "migration"
+    ],
+    "content": "Before cancelling your account, export all your data from Settings → Export Data. You can export everything as a ZIP file containing CSV files for each data type. After cancellation, data is available for 30 days for download before permanent deletion.",
+    "embedding_id": null,
+    "created_at": "2026-01-22T20:45:47.899305+00:00",
+    "word_count": 41
+  },
+  {
+    "id": "c2864e9e-d762-4177-9fda-667c0d4c217f",
+    "title": "Connecting Gmail for Email Integration",
+    "category": "general_inquiry",
+    "tags": [
+      "gmail",
+      "email",
+      "integration",
+      "google"
+    ],
+    "content": "Go to Settings → Integrations → Gmail and click Connect. Sign in with your Google account and grant the requested permissions. Once connected, emails can be automatically captured. Disconnect anytime from the same settings page.",
+    "embedding_id": null,
+    "created_at": "2025-12-31T04:45:47.899312+00:00",
+    "word_count": 35
+  },
+  {
+    "id": "822c31e6-f270-45bf-a07e-37b8d119874e",
+    "title": "Setting Up Slack Notifications",
+    "category": "general_inquiry",
+    "tags": [
+      "slack",
+      "notifications",
+      "integration",
+      "alerts"
+    ],
+    "content": "Go to Settings → Integrations → Slack. Click Add to Slack. Select the workspace and channel for notifications. Choose which event types trigger notifications. You can configure per-workspace settings for teams.",
+    "embedding_id": null,
+    "created_at": "2025-12-01T08:45:47.899317+00:00",
+    "word_count": 31
+  },
+  {
+    "id": "1bf6c6c2-6a5e-47ea-af1d-3a7febbe1b01",
+    "title": "Understanding User Roles and Permissions",
+    "category": "account_access",
+    "tags": [
+      "roles",
+      "permissions",
+      "admin",
+      "access control"
+    ],
+    "content": "Roles: Owner (full access), Admin (full except billing/deletion), Editor (create and edit), Viewer (read-only). Roles can be changed by Owners and Admins from Settings → Team Members. Custom roles available on Enterprise plans.",
+    "embedding_id": null,
+    "created_at": "2025-11-07T18:45:47.899323+00:00",
+    "word_count": 33
+  },
+  {
+    "id": "e7110cd8-b17f-4d4c-9402-9a05b7f0b7e0",
+    "title": "Using the Dashboard and Analytics",
+    "category": "general_inquiry",
+    "tags": [
+      "dashboard",
+      "analytics",
+      "reports",
+      "metrics"
+    ],
+    "content": "The dashboard shows key metrics from the last 30 days by default. Use the date picker to change the range. Click any metric to see a detailed breakdown. Dashboard widgets can be rearranged and customized. Enterprise plans get custom dashboard creation.",
+    "embedding_id": null,
+    "created_at": "2026-03-11T19:45:47.899328+00:00",
+    "word_count": 41
+  },
+  {
+    "id": "d394d262-db23-400e-885c-da981158cb24",
+    "title": "Data Import: CSV Format Requirements",
+    "category": "technical_bug",
+    "tags": [
+      "import",
+      "csv",
+      "data",
+      "format",
+      "migration"
+    ],
+    "content": "CSV imports require UTF-8 encoding. First row must be headers matching field names from the API docs. Required fields: email, name. Optional: all other fields. Maximum 50,000 rows per import. For larger imports use the API. Template available at Settings → Import → Download Template.",
+    "embedding_id": null,
+    "created_at": "2025-12-07T22:45:47.899334+00:00",
+    "word_count": 45
+  },
+  {
+    "id": "7a052ef8-cc38-48fc-a53e-2ccb4b5e3a70",
+    "title": "Webhook Setup and Troubleshooting",
+    "category": "technical_bug",
+    "tags": [
+      "webhook",
+      "api",
+      "integration",
+      "events"
+    ],
+    "content": "Webhooks send POST requests to your endpoint for configured events. Your endpoint must return 200 within 10 seconds. Failed deliveries are retried 3 times with exponential backoff. View delivery logs in Settings → Webhooks → Delivery Logs. Verify webhook signatures using the secret key in your headers.",
+    "embedding_id": null,
+    "created_at": "2025-10-15T20:45:47.899340+00:00",
+    "word_count": 47
+  },
+  {
+    "id": "75717df0-af85-45be-b1e0-40663ae324ff",
+    "title": "Account Deletion and Data Removal",
+    "category": "account_access",
+    "tags": [
+      "delete",
+      "close",
+      "account",
+      "removal"
+    ],
+    "content": "To delete your account: Settings → Account → Delete Account. Only the Owner can delete the account. This action cannot be undone. All data is permanently deleted within 30 days. Export your data first. Deleting the account cancels the subscription with no refund of the current period.",
+    "embedding_id": null,
+    "created_at": "2026-01-03T16:45:47.899346+00:00",
+    "word_count": 47
+  },
+  {
+    "id": "1299d7b3-c1f3-4009-aa71-8da3e7ff94d0",
+    "title": "Troubleshooting Sync Issues",
+    "category": "technical_bug",
+    "tags": [
+      "sync",
+      "data",
+      "refresh",
+      "update"
+    ],
+    "content": "If data seems outdated: 1) Hard refresh the browser (Ctrl+Shift+R), 2) Log out and back in, 3) Go to Settings → Advanced → Force Sync. Sync issues are often due to network interruptions. Check our status page if the problem persists.",
+    "embedding_id": null,
+    "created_at": "2025-11-19T06:45:47.899351+00:00",
+    "word_count": 41
+  },
+  {
+    "id": "1125e6d3-36dd-4bdf-ae82-054dbaaa4d41",
+    "title": "Understanding API Rate Limits",
+    "category": "technical_bug",
+    "tags": [
+      "api",
+      "rate limit",
+      "429",
+      "throttle"
+    ],
+    "content": "Rate limits apply per API key. When exceeded, the API returns 429 Too Many Requests with a Retry-After header indicating seconds to wait. Implement exponential backoff. Check X-RateLimit-Remaining header to monitor usage. Enterprise customers can request higher limits.",
+    "embedding_id": null,
+    "created_at": "2026-02-08T05:45:47.899357+00:00",
+    "word_count": 38
+  },
+  {
+    "id": "85421206-6f0c-4390-8743-ac91fee54a15",
+    "title": "Setting Up SAML SSO with Okta",
+    "category": "account_access",
+    "tags": [
+      "sso",
+      "okta",
+      "saml",
+      "enterprise"
+    ],
+    "content": "1) In our platform: Settings → SSO → Enable SAML → download metadata. 2) In Okta: Applications → Add Application → SAML 2.0 → upload our metadata. 3) Copy Okta's metadata URL and paste into our SSO settings. 4) Test with the Test SSO button. 5) Enable for your users.",
+    "embedding_id": null,
+    "created_at": "2026-02-09T03:45:47.899362+00:00",
+    "word_count": 50
+  },
+  {
+    "id": "dd8b7c84-665b-43e0-9274-4176c2efb35c",
+    "title": "How Annual Billing Proration Works",
+    "category": "billing",
+    "tags": [
+      "annual",
+      "proration",
+      "billing",
+      "upgrade"
+    ],
+    "content": "When upgrading mid-annual-term: you're charged the prorated difference for the remaining days times the price difference. When downgrading: no refund, change takes effect at renewal. Switching from monthly to annual: remaining monthly days are credited. All proration is calculated by day.",
+    "embedding_id": null,
+    "created_at": "2026-01-26T08:45:47.899368+00:00",
+    "word_count": 41
+  },
+  {
+    "id": "a9040f59-9b3c-4a08-a5cc-ccab196f6c1a",
+    "title": "Setting Up IP Allowlisting",
+    "category": "account_access",
+    "tags": [
+      "ip",
+      "whitelist",
+      "allowlist",
+      "security",
+      "enterprise"
+    ],
+    "content": "Enterprise plan feature. Go to Settings → Security → IP Allowlist. Add trusted IP ranges in CIDR notation. Once enabled, logins from other IPs are blocked. Always add your own IP first. Emergency bypass: contact support. Recommended for high-security environments.",
+    "embedding_id": null,
+    "created_at": "2026-01-22T08:45:47.899374+00:00",
+    "word_count": 40
+  },
+  {
+    "id": "352ca35f-7239-4bcf-b7e4-5338c9c79fd4",
+    "title": "Using the Audit Log",
+    "category": "account_access",
+    "tags": [
+      "audit",
+      "log",
+      "activity",
+      "history",
+      "enterprise"
+    ],
+    "content": "Enterprise feature. Go to Settings → Audit Log to see all account activity. Filterable by user, action type, and date range. Events include logins, data changes, settings updates, and API access. Can be exported as CSV. Retained for 12 months. Useful for compliance and security reviews.",
+    "embedding_id": null,
+    "created_at": "2025-11-15T00:45:47.899379+00:00",
+    "word_count": 46
+  },
+  {
+    "id": "dfcd17e0-33fe-48e1-93c6-3bc294775d43",
+    "title": "Troubleshooting Email Notifications",
+    "category": "technical_bug",
+    "tags": [
+      "email",
+      "notifications",
+      "alerts",
+      "spam"
+    ],
+    "content": "If not receiving emails: 1) Check spam/junk folder, 2) Add noreply@ourplatform.com to contacts, 3) Verify notification settings at Settings → Notifications, 4) Check if email is verified under Account Settings, 5) Contact support if the issue persists for more than 24 hours.",
+    "embedding_id": null,
+    "created_at": "2026-03-02T00:45:47.899385+00:00",
+    "word_count": 42
+  },
+  {
+    "id": "0306af00-9ce2-4ca3-acf0-88eb53df53ea",
+    "title": "Upgrading from Free to Paid Plans",
+    "category": "billing",
+    "tags": [
+      "upgrade",
+      "free",
+      "paid",
+      "starter",
+      "pro"
+    ],
+    "content": "To upgrade: Settings → Billing → Upgrade Plan. Add a payment method if not already on file. Select your desired plan and billing frequency (monthly saves flexibility, annual saves money). The upgrade takes effect immediately — you keep your data and settings.",
+    "embedding_id": null,
+    "created_at": "2025-12-01T08:45:47.899391+00:00",
+    "word_count": 42
+  },
+  {
+    "id": "cc145003-2531-42e2-953a-8ab66d41158e",
+    "title": "Setting Up Custom Domains",
+    "category": "general_inquiry",
+    "tags": [
+      "custom domain",
+      "branding",
+      "white label",
+      "pro"
+    ],
+    "content": "Pro and Enterprise feature. Go to Settings → Custom Domain. Enter your domain. Add the required CNAME record to your DNS. Wait up to 48 hours for DNS propagation. SSL certificate is automatically provisioned. Custom login page and branded emails available.",
+    "embedding_id": null,
+    "created_at": "2025-10-12T17:45:47.899397+00:00",
+    "word_count": 41
+  },
+  {
+    "id": "f8141415-1c60-4129-b109-0814e078007c",
+    "title": "Understanding Storage Limits",
+    "category": "general_inquiry",
+    "tags": [
+      "storage",
+      "limits",
+      "file",
+      "quota"
+    ],
+    "content": "Storage limits by plan: Free 1GB, Starter 10GB, Pro 100GB, Enterprise unlimited. View usage at Settings → Storage. Files over the limit cannot be uploaded. You'll receive email alerts at 80% and 95% capacity. Upgrade anytime to increase storage. Old or unused files can be deleted to free space.",
+    "embedding_id": null,
+    "created_at": "2026-03-24T15:45:47.899402+00:00",
+    "word_count": 49
+  }
+]
