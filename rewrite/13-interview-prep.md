@@ -1,28 +1,343 @@
-# Module 13: Interview Preparation & Portfolio Projects
+# Appendix C: Interview Preparation for Data Engineers
 
-## The Interview Mindset
+## The Data Engineering Interview Landscape
 
-After conducting 150+ system design interviews at three companies, I can tell you: the difference between candidates who get offers and those who don't is rarely technical knowledge. Most senior candidates know Kafka, know SQL, know the CAP theorem. The difference is **how they think and communicate**.
+Data engineering interviews are different from software engineering interviews. You will not be asked to implement a red-black tree or solve dynamic programming puzzles. Instead, you will face a combination of: SQL coding challenges, Python coding for data tasks, system design for data pipelines, data modeling questions, and behavioral questions about working with data at scale.
 
-**Wrong mindset**: "I need to design the perfect system and impress the interviewer with cutting-edge technology."
+After conducting 150+ system design interviews at three companies, I can tell you: the difference between candidates who get offers and those who do not is rarely technical knowledge. Most senior candidates know Kafka, know SQL, know the CAP theorem. The difference is **how they think and communicate**.
 
-**Right mindset**: "I need to understand the business problem, solve it effectively, and communicate my reasoning clearly."
+The best candidates treat the interview as a collaborative design session -- like a meeting with a colleague to whiteboard an architecture. They ask clarifying questions, state assumptions explicitly, explain trade-offs, and invite the interviewer into the decision-making process.
 
-The best candidates treat the interview as a **collaborative design session** — like a meeting with a colleague to whiteboard an architecture. They ask clarifying questions, state assumptions explicitly, explain trade-offs, and invite the interviewer into the decision-making process.
-
-> **Key Takeaway:** System design interviews test three things: (1) Can you break down ambiguous problems? (2) Can you design reasonable solutions? (3) Can you communicate your thinking? Technical depth is table stakes — communication and structured thinking are the differentiators.
+> **Key Takeaway:** Data engineering interviews test five things: (1) Can you write production-quality SQL? (2) Can you design data systems? (3) Can you model data correctly? (4) Can you write Python for data tasks? (5) Can you communicate technical decisions clearly? This appendix prepares you for all five.
 
 ---
 
-## The 45-Minute Structure
+## Part 1: Data Modeling Interview Questions
 
-Most system design interviews are 45 minutes. Here's how to allocate that time:
+Data modeling questions test whether you understand how to structure data for analytical workloads. These tie directly to Module 1 (Foundations) and Module 6 (dbt).
 
-### Minutes 1-8: Requirements and Scale Estimation
+### Question 1: Design a Star Schema for a Ride-Sharing Company
 
-This phase is critical and most candidates rush through it. Slow down. Ask questions. The interviewer deliberately leaves the problem ambiguous to see if you'll clarify before building.
+**Interviewer:** "Design the data model for a ride-sharing analytics platform. The business wants to analyze ride volume, revenue, driver performance, and rider behavior."
 
-**Sample dialogue:**
+**Strong answer:**
+
+"I would start with a star schema centered on a `fact_rides` table. The grain is one row per completed ride.
+
+**Fact table:**
+
+```sql
+fact_rides (
+    ride_key            BIGINT,         -- Surrogate key
+    ride_id             VARCHAR,        -- Business key
+    rider_key           BIGINT,         -- FK to dim_rider
+    driver_key          BIGINT,         -- FK to dim_driver
+    pickup_location_key BIGINT,         -- FK to dim_location
+    dropoff_location_key BIGINT,        -- FK to dim_location
+    pickup_date_key     INT,            -- FK to dim_date
+    pickup_time_key     INT,            -- FK to dim_time
+    vehicle_key         BIGINT,         -- FK to dim_vehicle
+    -- Measures
+    ride_distance_miles DECIMAL(8,2),
+    ride_duration_minutes DECIMAL(8,2),
+    base_fare           DECIMAL(8,2),
+    surge_multiplier    DECIMAL(4,2),
+    total_fare          DECIMAL(8,2),
+    driver_payout       DECIMAL(8,2),
+    platform_fee        DECIMAL(8,2),
+    tip_amount          DECIMAL(8,2),
+    rating_by_rider     INT,            -- 1-5
+    rating_by_driver    INT,            -- 1-5
+    wait_time_minutes   DECIMAL(6,2),
+    ride_status         VARCHAR         -- 'completed', 'cancelled_rider', 'cancelled_driver'
+)
+```
+
+**Dimension tables:**
+
+- `dim_rider`: rider demographics, signup date, lifetime rides, rider tier (SCD Type 2 for tier changes)
+- `dim_driver`: driver demographics, signup date, vehicle type, average rating, driver tier (SCD Type 2)
+- `dim_location`: city, neighborhood, latitude, longitude, H3 hex cell (for geospatial aggregation)
+- `dim_date`: standard date dimension with day of week, holiday flags, fiscal period
+- `dim_time`: hour, minute, time-of-day bucket (morning rush, midday, evening rush, late night)
+- `dim_vehicle`: vehicle type, year, model, capacity
+
+I would use SCD Type 2 on `dim_rider` and `dim_driver` because tier changes affect analysis. If a driver was 'gold' tier when they gave a ride, we want to know that, not just their current tier."
+
+**Follow-up: "Why not a single timestamp column instead of separate date and time dimension keys?"**
+
+"Separate date and time dimensions make aggregation much faster. If I want 'total rides on Saturdays during evening rush,' I can filter on `dim_date.day_of_week = 'Saturday'` and `dim_time.time_bucket = 'evening_rush'` using simple equality joins. With a single timestamp, every query needs date functions like `EXTRACT(DOW FROM timestamp)` and `EXTRACT(HOUR FROM timestamp)`, which cannot use sort keys or clustering as effectively."
+
+**Follow-up: "How would you handle cancelled rides?"**
+
+"I would include them in `fact_rides` with a `ride_status` column. Cancelled rides have measures of zero for fare and distance but still have valid data for wait time, location, and time. Analyzing cancellation patterns is a key business need: where are cancellations happening? Which drivers cancel most? What time of day has the highest cancellation rate? Excluding them would lose this analytical capability."
+
+---
+
+### Question 2: Explain SCD Types and When to Use Each
+
+**Interviewer:** "What are Slowly Changing Dimensions and when would you use Type 1 vs Type 2 vs Type 3?"
+
+**Strong answer:**
+
+"Slowly Changing Dimensions handle the problem of attribute changes in dimension tables over time.
+
+**Type 1 (Overwrite):** Replace the old value with the new value. No history is preserved. Use this when history does not matter -- for example, fixing a typo in a product name or updating a customer's email address.
+
+**Type 2 (Add New Row):** Create a new row with the new value, marking the old row as inactive with `valid_from` and `valid_to` dates. This preserves full history. Use this when the change is analytically meaningful -- for example, when a customer changes their address (affects regional sales analysis) or when a customer's loyalty tier changes (affects behavior analysis).
+
+**Type 3 (Add New Column):** Add a `previous_value` and `current_value` column. Only tracks one change. I almost never recommend this because it is limited to exactly one historical value, which is rarely sufficient.
+
+In practice, I default to Type 1 for most attributes and use Type 2 selectively for attributes that drive analytical decisions. Over-using Type 2 causes dimension table bloat and query complexity. Under-using it means you lose important history.
+
+A common mistake is using Type 2 for everything. If your `dim_customer` table has 1 million customers and you track 10 attributes with Type 2, you might end up with 15 million rows, most of which are historical and rarely queried. Be selective."
+
+---
+
+### Question 3: Normalize vs. Denormalize
+
+**Interviewer:** "When would you normalize your data model and when would you denormalize it?"
+
+**Strong answer:**
+
+"The choice depends on the workload pattern.
+
+**Normalize (3NF) when:**
+- The system is write-heavy (OLTP) and you need to minimize data redundancy
+- You need referential integrity enforced at the database level
+- The data is the operational source of truth (transactional databases)
+- Example: the production PostgreSQL database behind a web application
+
+**Denormalize (star schema, wide tables) when:**
+- The system is read-heavy (OLAP/analytics) and you need fast query performance
+- Users are running aggregations, joins, and filters across large datasets
+- The data is loaded in batch and queried frequently
+- Example: a Snowflake data warehouse serving Tableau dashboards
+
+**The trade-off in one sentence:** Normalization optimizes for write performance and data integrity. Denormalization optimizes for read performance and query simplicity.
+
+In modern data engineering, the common pattern is: normalized in the source system, denormalized in the warehouse. The dbt transformation layer (Module 6) handles the conversion."
+
+---
+
+## Part 2: SQL Coding Challenges
+
+SQL is the most tested skill in data engineering interviews. You will be asked to write queries on a whiteboard or in a shared coding environment. These questions map directly to Module 2 (SQL Mastery).
+
+### Challenge 1: Deduplicate Records
+
+**Problem:** "Given a table `raw_events` with duplicate records (same `event_id` appearing multiple times due to at-least-once delivery), write a query to deduplicate it, keeping only the first occurrence based on `received_at`."
+
+```sql
+-- Method 1: ROW_NUMBER (most common approach)
+WITH ranked AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY event_id
+            ORDER BY received_at ASC
+        ) AS rn
+    FROM raw_events
+)
+SELECT * FROM ranked WHERE rn = 1;
+
+-- Method 2: QUALIFY (Snowflake/BigQuery -- more concise)
+SELECT *
+FROM raw_events
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY event_id
+    ORDER BY received_at ASC
+) = 1;
+```
+
+**What interviewers look for:** Do you know ROW_NUMBER vs RANK vs DENSE_RANK? (ROW_NUMBER assigns unique numbers even for ties; RANK leaves gaps; DENSE_RANK does not.) Can you explain why you chose `ORDER BY received_at ASC`? (We want the first occurrence, so ascending order puts it at row number 1.)
+
+---
+
+### Challenge 2: Running Totals and Moving Averages
+
+**Problem:** "Write a query that shows daily revenue with a 7-day moving average and a running total for the month."
+
+```sql
+SELECT
+    order_date,
+    daily_revenue,
+    -- 7-day moving average (current day + 6 preceding days)
+    AVG(daily_revenue) OVER (
+        ORDER BY order_date
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_7d,
+    -- Running total for the month (resets each month)
+    SUM(daily_revenue) OVER (
+        PARTITION BY DATE_TRUNC('month', order_date)
+        ORDER BY order_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS monthly_running_total
+FROM (
+    SELECT
+        DATE_TRUNC('day', order_timestamp) AS order_date,
+        SUM(total_amount) AS daily_revenue
+    FROM orders
+    GROUP BY 1
+) daily
+ORDER BY order_date;
+```
+
+**What interviewers look for:** Do you understand the difference between `ROWS BETWEEN` and `RANGE BETWEEN`? Can you explain why `PARTITION BY DATE_TRUNC('month', order_date)` resets the running total each month?
+
+---
+
+### Challenge 3: Gap and Island Detection
+
+**Problem:** "Given a table of user login dates, find consecutive login streaks (islands) for each user."
+
+```sql
+-- Classic gaps-and-islands using the ROW_NUMBER trick
+WITH numbered AS (
+    SELECT
+        user_id,
+        login_date,
+        -- Subtracting a sequential number from the date
+        -- creates a constant value for consecutive dates
+        login_date - INTERVAL '1 day' * ROW_NUMBER() OVER (
+            PARTITION BY user_id
+            ORDER BY login_date
+        ) AS group_key
+    FROM (
+        SELECT DISTINCT user_id, DATE_TRUNC('day', login_timestamp) AS login_date
+        FROM user_logins
+    ) daily_logins
+)
+SELECT
+    user_id,
+    MIN(login_date) AS streak_start,
+    MAX(login_date) AS streak_end,
+    COUNT(*) AS streak_days
+FROM numbered
+GROUP BY user_id, group_key
+HAVING COUNT(*) >= 3  -- Only streaks of 3+ days
+ORDER BY user_id, streak_start;
+```
+
+**Explain the trick:** If a user logs in on Jan 1, 2, 3, 5, 6: subtracting row numbers (1,2,3,4,5) from the dates gives (Dec 31, Dec 31, Dec 31, Jan 1, Jan 1). The consecutive days map to the same `group_key`, while the gap creates a new group.
+
+---
+
+### Challenge 4: Sessionization
+
+**Problem:** "Given a table of page view events with timestamps, define a session as a group of events where no two consecutive events are more than 30 minutes apart. Assign session IDs."
+
+```sql
+WITH time_gaps AS (
+    SELECT
+        user_id,
+        event_timestamp,
+        page_url,
+        LAG(event_timestamp) OVER (
+            PARTITION BY user_id ORDER BY event_timestamp
+        ) AS prev_event_ts,
+        DATEDIFF('minute',
+            LAG(event_timestamp) OVER (
+                PARTITION BY user_id ORDER BY event_timestamp
+            ),
+            event_timestamp
+        ) AS minutes_since_last
+    FROM page_views
+),
+session_starts AS (
+    SELECT
+        *,
+        CASE
+            WHEN minutes_since_last IS NULL THEN 1      -- First event
+            WHEN minutes_since_last > 30 THEN 1          -- New session
+            ELSE 0
+        END AS is_new_session
+    FROM time_gaps
+)
+SELECT
+    user_id,
+    event_timestamp,
+    page_url,
+    SUM(is_new_session) OVER (
+        PARTITION BY user_id
+        ORDER BY event_timestamp
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS session_id
+FROM session_starts;
+```
+
+**What interviewers look for:** Can you use LAG to compute inter-event time? Can you use a cumulative SUM of a flag to assign group IDs? This is a pattern that appears constantly in product analytics (Module 6, Case Study 3 in Appendix B).
+
+---
+
+### Challenge 5: Pivot / Unpivot
+
+**Problem:** "Given a table with one row per student per subject with their score, pivot it to show one row per student with columns for each subject."
+
+```sql
+-- Pivot (rows to columns)
+SELECT
+    student_id,
+    MAX(CASE WHEN subject = 'math' THEN score END) AS math_score,
+    MAX(CASE WHEN subject = 'science' THEN score END) AS science_score,
+    MAX(CASE WHEN subject = 'english' THEN score END) AS english_score
+FROM student_scores
+GROUP BY student_id;
+
+-- Unpivot (columns to rows) -- Snowflake syntax
+SELECT student_id, subject, score
+FROM student_scores_wide
+UNPIVOT (score FOR subject IN (math_score, science_score, english_score));
+```
+
+---
+
+### Challenge 6: Cumulative Distinct Count
+
+**Problem:** "For each day, show the cumulative number of distinct users who have ever made a purchase up to that day."
+
+```sql
+-- This is tricky because COUNT(DISTINCT) does not work as a window function
+WITH first_purchases AS (
+    SELECT
+        user_id,
+        MIN(DATE_TRUNC('day', purchase_timestamp)) AS first_purchase_date
+    FROM purchases
+    GROUP BY user_id
+),
+daily_new_users AS (
+    SELECT
+        first_purchase_date AS purchase_date,
+        COUNT(*) AS new_users
+    FROM first_purchases
+    GROUP BY first_purchase_date
+)
+SELECT
+    purchase_date,
+    new_users,
+    SUM(new_users) OVER (
+        ORDER BY purchase_date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS cumulative_distinct_users
+FROM daily_new_users
+ORDER BY purchase_date;
+```
+
+**The key insight:** You cannot use `COUNT(DISTINCT user_id)` as a window function over expanding frames. Instead, find each user's first purchase date, count new users per day, then use a cumulative SUM.
+
+---
+
+## Part 3: System Design for Data Pipelines
+
+System design interviews for data engineers focus on designing data systems, not web applications. You will be asked to design ETL pipelines, real-time analytics systems, and data platforms.
+
+### The 45-Minute Structure
+
+**Minutes 1-8: Requirements and Scale Estimation**
+
+Ask clarifying questions. The interviewer deliberately leaves the problem ambiguous.
+
+Sample dialogue:
 
 > **You**: "Before I start designing, I'd like to understand the requirements. When you say 'design a data warehouse for analytics,' who are the primary users?"
 >
@@ -32,1068 +347,623 @@ This phase is critical and most candidates rush through it. Slow down. Ask quest
 >
 > **Interviewer**: "We process about 50,000 orders per day, so maybe a few terabytes total."
 >
-> **You**: "Okay, and for freshness — do stakeholders need real-time data, or is daily sufficient?"
->
-> **Interviewer**: "Daily is fine for most use cases, but the fraud team wants near-real-time."
+> **You**: "And for freshness -- do stakeholders need real-time data, or is daily sufficient?"
 
-In 5 minutes, you've established: user count, data volume, freshness requirements, and identified a specialized need (fraud team). This shapes every subsequent decision.
+Always estimate scale: "50,000 orders/day times 500 bytes is about 25 MB/day raw. Over 5 years, that is 45 GB. With dimension tables and 3x overhead: roughly 150 GB. This is well within a single Snowflake warehouse."
 
-**Always estimate scale**: "50,000 orders/day × 500 bytes ≈ 25 MB/day raw. Over 5 years, that's ~45 GB. With dimension tables, transformations, and 3x overhead: ~150 GB total. This is well within a single PostgreSQL instance, but a cloud warehouse gives us elasticity and separation of concerns."
+**Minutes 8-20: High-Level Architecture**
 
-### Minutes 8-20: High-Level Architecture
-
-Draw the major components and data flow. Keep it simple — 5-7 boxes connected by arrows. For each component, state the technology choice and a one-sentence justification.
+Draw 5-7 boxes connected by arrows. State technology choices with one-sentence justifications.
 
 ```
-[Data Sources] → [Ingestion (Airbyte)] → [Raw Storage (S3)]
-         → [Transform (dbt on Snowflake)] → [Analytics Tables]
-                                                    → [BI (Tableau)]
-                                                    → [ML (Python)]
+[Data Sources] --> [Ingestion (Airbyte)] --> [Raw Storage (S3)]
+    --> [Transform (dbt on Snowflake)] --> [Analytics Tables]
+                                                --> [BI (Tableau)]
+                                                --> [ML (Python)]
 ```
 
-**What to include**: Data sources, ingestion method, storage, processing/transformation, serving layer, key data flows.
+**Minutes 20-35: Component Deep Dive**
 
-**What NOT to include yet**: Internal component details, specific configurations, error handling. Those come in the deep dive.
+The interviewer steers you to the most interesting component. Go deep: data models, schema design, query patterns, error handling.
 
-### Minutes 20-35: Component Deep Dive
+**Minutes 35-40: Scale and Optimize**
 
-The interviewer will steer you toward the most interesting components. Pick 1-2 and go deep: data models, API design, algorithms, scaling strategies.
+Identify bottlenecks: "At 10x scale, the transformation step becomes the bottleneck. I would switch from full-refresh to incremental dbt models and parallelize independent transformations."
 
-This is where your technical knowledge shows. If you're asked to deep-dive on the data model, walk through your star schema design — fact tables, dimension tables, how SCD Type 2 handles customer changes. If you're asked about the ingestion pipeline, discuss exactly-once delivery, schema evolution, and error handling.
+**Minutes 40-45: Trade-offs and Alternatives**
 
-### Minutes 35-40: Scale and Optimize
-
-Identify bottlenecks in your design and explain how to address them:
-
-- "The transformation step is the bottleneck at 10x scale. I'd switch from a single dbt run to incremental models and parallelize independent transformations."
-- "At 100x the current query load, I'd add materialized views for common dashboard queries and implement a caching layer."
-
-### Minutes 40-45: Trade-offs and Alternatives
-
-End by acknowledging what you sacrificed and why:
-
-- "I chose Snowflake over BigQuery because the team is multi-cloud, but BigQuery would be cheaper for sporadic query patterns."
-- "I went with batch processing for simplicity, but if the fraud team's real-time requirement grows, I'd add a Kafka + Flink pipeline alongside the batch path."
+Acknowledge what you sacrificed: "I chose Snowflake over BigQuery because the team is multi-cloud, but BigQuery would be cheaper for sporadic query patterns."
 
 ---
 
-## Advanced Interview Techniques
+### Design Problem 1: Real-Time Analytics Dashboard
 
-### Technique 1: Assumption Surfacing
+**Prompt:** "Design a system that shows real-time metrics (orders per minute, revenue, active users) on a dashboard that updates every 10 seconds."
 
-Vocalize your assumptions instead of making them silently:
-
-> "I'm assuming this is a read-heavy system — maybe 100:1 read-to-write ratio. Does that match your expectations?"
-
-This shows structured thinking and gives the interviewer a chance to redirect you. Silent assumptions lead to wrong designs; vocalized assumptions lead to useful corrections.
-
-### Technique 2: Iterative Design
-
-Start with the simplest architecture that works, then add complexity:
-
-> "For the initial design with 50K orders/day, I'd start with PostgreSQL and a daily cron job running Python scripts. As we scale to 500K orders/day, I'd move to Airflow for orchestration and Snowflake for the warehouse. At 5M orders/day, I'd add streaming with Kafka for the real-time use cases."
-
-This demonstrates that you understand when complexity is justified — which is far more impressive than jumping straight to a distributed architecture for a small-scale problem.
-
-### Technique 3: Failure Mode Analysis
-
-Identify critical failure scenarios and your mitigation:
-
-| Failure Scenario | Impact | Mitigation | Recovery Time |
-|-----------------|--------|------------|---------------|
-| Primary database down | No new data ingestion | Read replicas + auto-failover | <5 minutes |
-| ETL pipeline fails | Stale dashboard data | Retry logic + alerting, serve last-known-good | <30 minutes |
-| Data warehouse corruption | Wrong analytics | Point-in-time restore from immutable raw data | 4-8 hours |
-
-> **Key Takeaway:** These techniques — assumption surfacing, iterative design, failure mode analysis — separate candidates who "know the technology" from candidates who "think like architects." Practice them until they're natural.
-
----
-
-## Common Mistakes and How to Avoid Them
-
-### Mistake 1: Jumping to Technology Too Quickly
-
-**Bad**: "I'd use Kafka, Spark, and Snowflake."
-**Good**: "The first question is whether we need real-time processing. Given that daily freshness is acceptable for most users, I'd start with a simpler batch architecture. For the fraud team's real-time needs, I'd add a focused streaming pipeline — Kafka for ingestion, Flink for processing — rather than making the entire system real-time."
-
-### Mistake 2: Over-Engineering
-
-**Bad**: 15 microservices, event sourcing, CQRS, and a custom ML platform for a system that processes 1 GB/day for 10 analysts.
-
-**Good**: "At this scale — 1 GB/day, 10 users — the architecture should be simple: Airbyte for ingestion, dbt for transformation, Snowflake for warehousing, Tableau for visualization. Total cost: ~$500/month. I'd invest complexity only where the business requires it."
-
-### Mistake 3: Ignoring Business Context
-
-**Bad**: Technically perfect system that costs 10x the budget or requires a team of 20 to operate when the company has 3 data engineers.
-
-**Good**: "Given a 3-person team and a 6-month timeline, I'd choose managed services over self-hosted: BigQuery over self-managed Spark, Airbyte Cloud over custom connectors. The total cost is higher per unit, but the operational cost is dramatically lower."
-
-### Mistake 4: Not Handling Ambiguity
-
-**Bad**: Making assumptions without clarifying.
-
-**Good**: "You mentioned 'real-time analytics' — could you clarify what that means here? Are we talking sub-second latency for fraud detection, or a dashboard that refreshes every few minutes? Those are very different architectures."
-
----
-
-## Communication Frameworks
-
-### The Three-Level Explanation
-
-When explaining a design decision, adjust depth based on your audience:
-
-- **Executive summary**: "I'm choosing Kafka because it's the most reliable way to handle our event volume without data loss."
-- **Engineering peer**: "I'm choosing Kafka over RabbitMQ because we need message replay for reprocessing, topic-based routing for multiple consumers, and the throughput handles our 50K events/second peak."
-- **Deep dive**: "I'd configure Kafka with 12 partitions per topic — matching our consumer parallelism — replication factor 3 for durability, and 7-day retention for reprocessing capability. We'd use Avro with Schema Registry for schema evolution."
-
-In an interview, start with the executive summary and go deeper based on interviewer interest.
-
-### The Assumption → Implication Pattern
-
-Structure your reasoning as a chain:
-
-> "Given that we have 10x more reads than writes (assumption) → we need to optimize our read path (implication) → so I'm choosing a denormalized data model with pre-computed aggregations (decision) → which gives us sub-second dashboard queries but requires more complex write logic and 2x storage (trade-offs)."
-
----
-
-## Practice Questions with Solutions
-
-### Question 1: Design a Data Warehouse for E-Commerce
-
-**Setup**: E-commerce company. 1M customers, 50K orders/day, sources include PostgreSQL, Stripe, Google Analytics, Zendesk.
-
-**Requirements phase**: 20 analysts, 5 executives, 10 marketers. Daily freshness. 7-year retention for compliance. $5K/month budget.
-
-**Scale estimation**: 50K orders × 500 bytes = 25 MB/day raw. With all sources: ~700 MB/day. Over 7 years: ~1.8 TB. This is modest — a single cloud warehouse handles this easily.
-
-**Architecture**: Sources → Airbyte (ingestion) → S3 raw layer → dbt (transform) → Snowflake (warehouse) → Tableau (dashboards). Airflow orchestrates everything.
-
-**Deep dive on data model**: Star schema with `fact_orders` (one row per order line item, measures: quantity, revenue, discount, profit) joined to dimensions: `dim_customer` (SCD Type 2 for address changes), `dim_product` (category, brand, supplier), `dim_date` (fiscal calendar, holidays).
-
-**Scaling strategy**: Incremental dbt models, materialized views for top 10 dashboard queries, Snowflake auto-suspend for cost control, resource monitors per team.
-
-### Question 2: Design a Real-Time Fraud Detection System
-
-**Setup**: Payment processor. 10K transactions/second, decisions in <100ms, <2% false positive rate.
-
-**Architecture**: Transaction → Kafka (partitioned by user_id) → Flink (feature enrichment) → ML Ensemble (gRPC) → Decision Engine → Response.
-
-**Latency budget**: Kafka (15ms) + Feature lookup from Redis (5ms) + ML inference (30ms) + Rules engine (10ms) + Network (15ms) = 75ms. Under budget with headroom.
-
-**ML approach**: Four-model ensemble — gradient boosting (tabular features), neural network (complex interactions), graph neural network (fraud rings), anomaly detection (novel patterns). Weighted voting with dynamic weights.
-
-**Key points to mention**: Feature store for training/serving consistency, model A/B testing with gradual rollout, graceful degradation (rules-only if ML fails), PCI DSS compliance, real-time model monitoring for drift.
-
-### Question 3: Design a Content Recommendation System
-
-**Setup**: Media platform. 10M users, 1M content items, real-time recommendations on homepage.
-
-**Architecture**: User events (Kafka) → Feature pipeline (Spark) → Feature Store (Feast) → Training (weekly, MLflow) → Serving (FastAPI + Redis).
-
-**Algorithm**: Collaborative filtering (users who watched X also watched Y) + content-based (similar genre/tags/duration) + popularity baseline. Multi-armed bandit to balance strategies.
-
-**Key points to mention**: Cold start problem (new users: use popularity and demographics; new content: use content features and boost exploration), diversity in recommendations (MMR), A/B testing framework, latency budget (<50ms), offline evaluation (precision@k, recall@k, NDCG) vs online evaluation (click-through rate, watch time, retention).
-
----
-
-## Portfolio Projects
-
-Build 2-3 projects that demonstrate system design thinking, not just coding ability. Below are detailed blueprints for each — follow them step by step, and you'll have portfolio pieces that stand out in any interview.
-
-### Project 1: Production-Grade Data Pipeline (3-4 weeks)
-
-**What it demonstrates**: orchestration, data modeling, quality engineering, operational maturity.
-
-**The scenario**: You're building a pipeline that ingests public weather data and NYC taxi trip records, transforms them into an analytics-ready star schema, and serves a dashboard showing how weather affects taxi demand. This mirrors what real data teams build daily.
-
-#### Week 1: Set Up Infrastructure and Ingestion
-
-**Step 1 — Create your project structure:**
+**Strong answer structure:**
 
 ```
-weather-taxi-pipeline/
-├── dags/                    # Airflow DAG definitions
-│   └── weather_taxi_dag.py
-├── dbt/                     # dbt transformation project
-│   ├── models/
-│   │   ├── staging/         # Clean raw data
-│   │   ├── intermediate/    # Join and enrich
-│   │   └── marts/           # Final star schema
-│   ├── tests/               # Data quality tests
-│   └── dbt_project.yml
-├── scripts/
-│   └── extract.py           # Extraction scripts
-├── docker-compose.yml       # Local Airflow + Postgres
-├── requirements.txt
-└── README.md
+[Web App Events] ---> [Kafka] ---> [Flink/Spark Streaming] ---> [Redis]
+[Mobile Events]  --->                                              |
+[API Events]     --->                                              v
+                                                            [Dashboard (WebSocket)]
+                           |
+                           v (parallel path)
+                      [S3 Parquet] ---> [Snowflake] ---> [Tableau]
+                      (batch archive)   (historical)     (historical dashboards)
 ```
 
-**Step 2 — Stand up local Airflow with Docker Compose.** Use the official Apache Airflow Docker Compose file as a starting point. You need three services: the Airflow webserver, the scheduler, and a Postgres database that doubles as your local warehouse.
+"I would use a lambda architecture with two paths:
 
-```yaml
-# docker-compose.yml (simplified — extend the official Airflow compose)
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: warehouse
-      POSTGRES_USER: pipeline
-      POSTGRES_PASSWORD: pipeline
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+**Real-time path:** Events flow through Kafka, processed by Flink for windowed aggregations (orders per minute, running revenue totals), and written to Redis. The dashboard reads from Redis via WebSocket for sub-second updates.
+
+**Batch path:** The same Kafka events are also written to S3 as Parquet files (hourly partitions), loaded into Snowflake by dbt for historical analytics. This gives us the full history for trend analysis, cohort analysis, and ad-hoc queries.
+
+**Why two paths?** Real-time aggregations in Redis are approximate and ephemeral (last 24 hours). Batch processing in Snowflake is exact and permanent. The real-time dashboard answers 'what is happening right now?' while the historical dashboards answer 'what happened last quarter?'
+
+**Key design decisions:**
+- Kafka partitioned by event type (orders, page views, user actions) for parallel processing
+- Flink tumbling windows of 60 seconds for per-minute metrics, with late event tolerance of 5 minutes
+- Redis TTL of 24 hours on real-time aggregations (do not keep stale data)
+- S3 lifecycle policy: Standard for 30 days, IA for 90 days, Glacier for 1 year
+
+**What breaks first at 10x scale?** Redis becomes the bottleneck for writes. I would shard Redis by metric type and add read replicas for the dashboard. Kafka scales horizontally by adding partitions. Flink scales by adding task slots."
+
+---
+
+### Design Problem 2: ETL Pipeline for a Data Warehouse
+
+**Prompt:** "Design an ETL pipeline that ingests data from 10 different sources (3 databases, 4 APIs, 3 file drops) into a data warehouse for a team of 30 analysts."
+
+**Strong answer structure:**
+
+"First, let me understand the sources:
+- 3 databases (PostgreSQL, MySQL, MongoDB): CDC for real-time, full extract for initial load
+- 4 APIs (Salesforce, HubSpot, Stripe, Google Analytics): scheduled extraction, rate-limited
+- 3 file drops (CSV files from partners, landing in S3): event-driven trigger
+
+```
+[PostgreSQL]  --CDC--->  [Airbyte]  --->  [S3 Raw Layer]
+[MySQL]       --CDC--->                        |
+[MongoDB]     --CDC--->                        v
+[Salesforce]  --API--->               [Snowflake Raw Schema]
+[HubSpot]     --API--->                        |
+[Stripe]      --API--->                        v
+[GA4]         --API--->              [dbt: Staging -> Intermediate -> Marts]
+[Partner CSV] --S3 event--->                   |
+                                    +----------+----------+
+                                    |          |          |
+                                    v          v          v
+                              [Marketing   [Finance   [Product
+                               Marts]       Marts]     Marts]
+                                    |          |          |
+                                    v          v          v
+                              [Tableau]   [Mode]    [Jupyter]
 ```
 
-**Step 3 — Write extraction scripts.** Pull data from two free public APIs:
+**Orchestration:** Airflow with a dependency chain:
+1. Extract all sources in parallel (10 Airbyte sync jobs)
+2. Wait for all extracts to complete (using Airflow sensor or trigger rules)
+3. Run dbt staging models (clean each source independently)
+4. Run dbt intermediate models (join across sources)
+5. Run dbt mart models (business-specific aggregations)
+6. Run dbt tests (data quality)
+7. Notify Slack on success, PagerDuty on failure
 
-- **Weather**: NOAA Climate Data Online (free API key) or Open-Meteo (no key required). Pull daily temperature, precipitation, and wind speed for New York City.
-- **Taxi trips**: NYC Taxi & Limousine Commission publishes Parquet files on their website. Download one month of yellow taxi trip data (~3M rows).
+**Data modeling:** Star schema in the marts layer. Key fact tables: `fact_orders`, `fact_leads`, `fact_website_sessions`. Shared dimensions: `dim_customer`, `dim_product`, `dim_date`. Customer dimension uses SCD Type 2 for segment changes.
+
+**Error handling:**
+- Airbyte retries each source 3 times with exponential backoff
+- If a source fails, the pipeline continues with other sources (partial load is better than no load)
+- dbt tests run after transformation; failures alert but do not block dashboard access to yesterday's data
+- Idempotent loads: every run can be safely re-executed without creating duplicates
+
+**Cost estimate:** Airbyte Cloud ($500/month for 10 connectors), Snowflake ($3K-$5K/month for this volume), Airflow on Astronomer ($400/month). Total: roughly $5K/month for 30 analysts."
+
+---
+
+### Design Problem 3: Data Lake to Lakehouse Migration
+
+**Prompt:** "Your company has a 500 TB data lake on S3 with Parquet files, queried by Spark and Athena. Leadership wants to migrate to a lakehouse architecture. Design the migration."
+
+**Strong answer:**
+
+"I would migrate to Apache Iceberg on top of the existing S3 data. Iceberg gives us ACID transactions, schema evolution, time travel, and partition evolution without moving the data to a new system.
+
+**Phase 1 (weeks 1-4): Foundation**
+- Deploy an Iceberg catalog (AWS Glue Catalog or Nessie for git-like branching)
+- Convert the 10 most-queried tables from Parquet to Iceberg format using in-place migration (Iceberg can register existing Parquet files without rewriting them)
+- Validate that existing Spark jobs and Athena queries work against Iceberg tables
+
+**Phase 2 (weeks 5-8): Pipeline migration**
+- Update Spark write paths to use Iceberg's merge-on-read for incremental updates
+- Implement partition evolution: migrate from static `year/month/day` partitioning to Iceberg's hidden partitioning (queries do not need to know about partition structure)
+- Add schema evolution: enable column additions and renames without breaking existing queries
+
+**Phase 3 (weeks 9-12): Advanced features**
+- Enable time travel for debugging and auditing (query data as of any point in time)
+- Implement table maintenance: compaction (merge small files), expire snapshots (clean up old metadata), orphan file cleanup
+- Connect Snowflake as a query engine for analyst access (Snowflake supports Iceberg external tables)
+
+**Key trade-off:** Iceberg vs Delta Lake vs Hudi. I chose Iceberg because of its vendor neutrality (works with Spark, Flink, Trino, Snowflake, BigQuery), its hidden partitioning (the strongest partition evolution story), and its momentum in the open-source community. Delta Lake is strong if you are committed to the Databricks ecosystem."
+
+---
+
+## Part 4: Python Coding for Data Engineering Interviews
+
+Python questions in DE interviews focus on practical data tasks, not algorithms. You will be asked to write API clients, file processors, and data validators.
+
+### Challenge 1: API Client with Pagination and Rate Limiting
+
+**Problem:** "Write a Python function that fetches all records from a paginated REST API, handling rate limits (429 responses) with exponential backoff."
 
 ```python
-# scripts/extract.py
 import requests
-import pandas as pd
-from pathlib import Path
-
-def extract_weather(start_date: str, end_date: str) -> pd.DataFrame:
-    """Pull daily weather from Open-Meteo (free, no API key).
-
-    Returns a DataFrame with columns: date, temperature_max,
-    temperature_min, precipitation, wind_speed_max.
-    """
-    url = "https://archive-api.open-meteo.com/v1/archive"
-    params = {
-        "latitude": 40.7128,
-        "longitude": -74.0060,
-        "start_date": start_date,
-        "end_date": end_date,
-        "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max",
-        "timezone": "America/New_York",
-    }
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()["daily"]
-    return pd.DataFrame(data)
-
-def extract_taxi_trips(year: int, month: int) -> pd.DataFrame:
-    """Download NYC yellow taxi trip data (Parquet format).
-
-    The TLC publishes monthly files. Each file is ~100MB
-    with 2-3 million rows.
-    """
-    url = (
-        f"https://d37ci6vzurychx.cloudfront.net/trip-data/"
-        f"yellow_tripdata_{year}-{month:02d}.parquet"
-    )
-    return pd.read_parquet(url)
-```
-
-**Step 4 — Load raw data into Postgres.** Write a simple loader that creates `raw_weather` and `raw_taxi_trips` tables. Use `pandas.to_sql()` for simplicity, or `COPY` for performance. Don't transform anything yet — raw means raw.
-
-#### Week 2: Build the Transformation Layer with dbt
-
-**Step 5 — Initialize dbt and connect to Postgres:**
-
-```bash
-cd dbt/
-dbt init weather_taxi --adapter postgres
-```
-
-Configure `profiles.yml` to point at your local Postgres.
-
-**Step 6 — Build staging models.** These clean raw data without changing its grain (one row in = one row out):
-
-```sql
--- dbt/models/staging/stg_weather.sql
--- Clean and rename columns from the raw weather extract.
--- One row per day for NYC.
-
-SELECT
-    time::date                           AS weather_date,
-    temperature_2m_max                   AS temp_high_f,
-    temperature_2m_min                   AS temp_low_f,
-    precipitation_sum                    AS precipitation_inches,
-    wind_speed_10m_max                   AS wind_speed_max_mph,
-    CASE
-        WHEN precipitation_sum > 0.5 THEN 'rainy'
-        WHEN temperature_2m_max < 32 THEN 'freezing'
-        WHEN wind_speed_10m_max > 25 THEN 'windy'
-        ELSE 'clear'
-    END                                  AS weather_category
-FROM {{ source('raw', 'raw_weather') }}
-```
-
-```sql
--- dbt/models/staging/stg_taxi_trips.sql
--- Clean taxi trips: filter invalid records, normalize columns.
--- Drop rows with null pickup times or impossible fares.
-
-SELECT
-    tpep_pickup_datetime::date           AS trip_date,
-    tpep_pickup_datetime                 AS pickup_at,
-    tpep_dropoff_datetime                AS dropoff_at,
-    passenger_count,
-    trip_distance,
-    fare_amount,
-    tip_amount,
-    total_amount,
-    PULocationID                         AS pickup_location_id,
-    DOLocationID                         AS dropoff_location_id
-FROM {{ source('raw', 'raw_taxi_trips') }}
-WHERE tpep_pickup_datetime IS NOT NULL
-  AND fare_amount > 0
-  AND trip_distance > 0
-```
-
-**Step 7 — Build the star schema in the marts layer:**
-
-```sql
--- dbt/models/marts/fact_daily_trips.sql
--- Fact table: one row per day with aggregated trip metrics
--- joined to weather conditions. This is the table dashboards query.
-
-SELECT
-    t.trip_date,
-    w.weather_category,
-    w.temp_high_f,
-    w.precipitation_inches,
-    COUNT(*)                             AS total_trips,
-    AVG(t.trip_distance)                 AS avg_distance,
-    AVG(t.fare_amount)                   AS avg_fare,
-    SUM(t.total_amount)                  AS total_revenue,
-    AVG(t.tip_amount)                    AS avg_tip
-FROM {{ ref('stg_taxi_trips') }} t
-LEFT JOIN {{ ref('stg_weather') }} w
-    ON t.trip_date = w.weather_date
-GROUP BY 1, 2, 3, 4
-```
-
-**Step 8 — Add dbt tests for data quality:**
-
-```yaml
-# dbt/models/marts/schema.yml
-models:
-  - name: fact_daily_trips
-    description: "Daily taxi trip aggregates joined with weather"
-    columns:
-      - name: trip_date
-        tests:
-          - not_null
-          - unique
-      - name: total_trips
-        tests:
-          - not_null
-      - name: avg_fare
-        tests:
-          - not_null
-          # Fares should be reasonable
-          - dbt_utils.accepted_range:
-              min_value: 5
-              max_value: 200
-```
-
-#### Week 3: Orchestrate with Airflow and Add Monitoring
-
-**Step 9 — Write the Airflow DAG that ties everything together:**
-
-```python
-# dags/weather_taxi_dag.py
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
-from datetime import datetime, timedelta
-
-default_args = {
-    "retries": 2,
-    "retry_delay": timedelta(minutes=5),
-}
-
-with DAG(
-    "weather_taxi_pipeline",
-    default_args=default_args,
-    schedule_interval="@daily",
-    start_date=datetime(2024, 1, 1),
-    catchup=False,
-    tags=["portfolio", "weather", "taxi"],
-) as dag:
-
-    extract_weather = PythonOperator(
-        task_id="extract_weather",
-        python_callable=extract_weather_task,  # Wraps extract.py
-    )
-
-    extract_taxi = PythonOperator(
-        task_id="extract_taxi",
-        python_callable=extract_taxi_task,
-    )
-
-    # dbt run handles staging → intermediate → marts
-    dbt_run = BashOperator(
-        task_id="dbt_run",
-        bash_command="cd /opt/airflow/dbt && dbt run --profiles-dir .",
-    )
-
-    dbt_test = BashOperator(
-        task_id="dbt_test",
-        bash_command="cd /opt/airflow/dbt && dbt test --profiles-dir .",
-    )
-
-    # Extract in parallel, then transform, then test
-    [extract_weather, extract_taxi] >> dbt_run >> dbt_test
-```
-
-**Step 10 — Add monitoring and alerting.** Configure Airflow email alerts on failure. Add a Slack webhook notification for pipeline completion. Log row counts at each stage so you can spot anomalies.
-
-#### Week 4: Polish and Document
-
-**Step 11 — Build a simple dashboard.** Use Streamlit (Python, quick to build) or Metabase (free, SQL-based). Show: trips per day colored by weather category, average fare by weather type, a heatmap of rainy days vs. trip volume.
-
-**Step 12 — Write your design document** (see the Documentation section below).
-
-**Step 13 — Deploy to the cloud (optional but impressive).** Push the pipeline to Astronomer (free trial), GCP Cloud Composer, or AWS MWAA. Use BigQuery or Snowflake (free trial) instead of Postgres. This shows you can operate in a real cloud environment.
-
----
-
-### Project 2: Real-Time Analytics Platform (4-6 weeks)
-
-**What it demonstrates**: streaming architecture, multi-backend design, real-time processing.
-
-**The scenario**: You're building a platform that ingests live Reddit posts from specific subreddits, analyzes sentiment in real time, and serves a live dashboard showing trending topics, sentiment shifts, and volume spikes. This mirrors what companies like Spotify and Twitter build for real-time content analytics.
-
-#### Week 1: Set Up Kafka and Data Ingestion
-
-**Step 1 — Stand up Kafka locally with Docker Compose:**
-
-```yaml
-# docker-compose.yml
-services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-```
-
-**Step 2 — Build a Reddit producer.** Use the `praw` library (Reddit's official Python wrapper) to stream new posts and comments from chosen subreddits:
-
-```python
-# producer/reddit_producer.py
-import praw
-import json
-from kafka import KafkaProducer
-from datetime import datetime
-
-# Reddit API credentials (free — create an app at reddit.com/prefs/apps)
-reddit = praw.Reddit(
-    client_id="YOUR_CLIENT_ID",
-    client_secret="YOUR_CLIENT_SECRET",
-    user_agent="streaming-analytics:v1.0",
-)
-
-producer = KafkaProducer(
-    bootstrap_servers="localhost:9092",
-    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-)
-
-# Stream comments from multiple subreddits in real time
-subreddits = reddit.subreddit("technology+programming+datascience")
-for comment in subreddits.stream.comments(skip_existing=True):
-    event = {
-        "id": comment.id,
-        "subreddit": comment.subreddit.display_name,
-        "author": str(comment.author),
-        "body": comment.body[:1000],  # Truncate long comments
-        "created_utc": comment.created_utc,
-        "score": comment.score,
-        "ingested_at": datetime.utcnow().isoformat(),
-    }
-    producer.send("reddit-comments", value=event)
-```
-
-**Step 3 — Verify the topic is receiving data.** Use the Kafka console consumer to see messages flowing: `kafka-console-consumer --bootstrap-server localhost:9092 --topic reddit-comments --from-beginning`
-
-#### Week 2: Build the Stream Processor
-
-**Step 4 — Build a Faust stream processor** (Python-native stream processing, simpler than Flink for a portfolio project):
-
-```python
-# processor/stream_processor.py
-import faust
-from textblob import TextBlob
-from datetime import datetime
-
-app = faust.App(
-    "reddit-analytics",
-    broker="kafka://localhost:9092",
-    store="rocksdb://",  # Local state store for aggregations
-)
-
-# Input topic
-comments_topic = app.topic("reddit-comments", value_type=bytes)
-
-# Output topics
-enriched_topic = app.topic("reddit-enriched", value_type=bytes)
-alerts_topic = app.topic("reddit-alerts", value_type=bytes)
-
-# Windowed table: track comment volume per subreddit (5-min windows)
-volume_table = app.Table(
-    "subreddit_volume",
-    default=int,
-).tumbling(300)  # 5-minute tumbling window
-
-@app.agent(comments_topic)
-async def process_comments(comments):
-    """Enrich each comment with sentiment analysis and
-    update the per-subreddit volume counter.
-
-    If volume spikes above 2x the recent average,
-    emit an alert to the alerts topic.
-    """
-    async for event in comments:
-        comment = json.loads(event)
-
-        # Sentiment analysis using TextBlob
-        blob = TextBlob(comment["body"])
-        sentiment = blob.sentiment
-
-        enriched = {
-            **comment,
-            "sentiment_polarity": sentiment.polarity,   # -1.0 to 1.0
-            "sentiment_subjectivity": sentiment.subjectivity,
-            "sentiment_label": (
-                "positive" if sentiment.polarity > 0.1
-                else "negative" if sentiment.polarity < -0.1
-                else "neutral"
-            ),
-            "word_count": len(comment["body"].split()),
-            "processed_at": datetime.utcnow().isoformat(),
-        }
-
-        # Update volume counter
-        subreddit = comment["subreddit"]
-        volume_table[subreddit] += 1
-
-        # Send enriched event downstream
-        await enriched_topic.send(value=json.dumps(enriched).encode())
-```
-
-**Step 5 — If you want to use Spark Streaming instead** (more widely used in industry but heavier to set up), replace Faust with PySpark:
-
-```python
-# Alternative: Spark Structured Streaming
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, udf
-from pyspark.sql.types import StringType, FloatType
-
-spark = SparkSession.builder \
-    .appName("reddit-analytics") \
-    .getOrCreate()
-
-# Read from Kafka
-raw_stream = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "reddit-comments") \
-    .load()
-
-# Parse JSON and add sentiment (via UDF)
-@udf(returnType=FloatType())
-def sentiment_score(text):
-    from textblob import TextBlob
-    return float(TextBlob(text).sentiment.polarity)
-
-enriched = raw_stream \
-    .select(from_json(col("value").cast("string"), schema).alias("data")) \
-    .select("data.*") \
-    .withColumn("sentiment", sentiment_score(col("body")))
-
-# Write to console for debugging, or to another Kafka topic
-enriched.writeStream \
-    .outputMode("append") \
-    .format("console") \
-    .start() \
-    .awaitTermination()
-```
-
-#### Week 3: Multi-Backend Storage
-
-**Step 6 — Write enriched data to three backends** (this is the key architectural decision that shows multi-backend thinking):
-
-- **Redis** — for real-time aggregations (last 5 minutes of sentiment by subreddit). Dashboards read from Redis for instant response.
-- **Elasticsearch** — for full-text search over comments. Powers a "search comments by keyword" feature.
-- **S3 or local Parquet files** — for historical analysis. Write hourly Parquet partitions for batch analytics.
-
-```python
-# sinks/redis_sink.py
-import redis
-import json
-
-r = redis.Redis(host="localhost", port=6379)
-
-def write_to_redis(enriched_event: dict):
-    """Update real-time aggregations in Redis.
-
-    Stores: current 5-min average sentiment per subreddit,
-    total comment count, and the last 100 comments.
-    """
-    subreddit = enriched_event["subreddit"]
-    pipeline = r.pipeline()
-
-    # Increment comment count
-    pipeline.incr(f"count:{subreddit}")
-
-    # Push to a capped list of recent comments
-    pipeline.lpush(f"recent:{subreddit}", json.dumps(enriched_event))
-    pipeline.ltrim(f"recent:{subreddit}", 0, 99)
-
-    # Update running sentiment average (simplified)
-    pipeline.lpush(f"sentiment:{subreddit}", enriched_event["sentiment_polarity"])
-    pipeline.ltrim(f"sentiment:{subreddit}", 0, 299)  # Keep last 300
-
-    pipeline.execute()
-```
-
-#### Weeks 4-5: Dashboard and Polish
-
-**Step 7 — Build a live dashboard with Streamlit:**
-
-```python
-# dashboard/app.py
-import streamlit as st
-import redis
-import json
-import pandas as pd
 import time
+from typing import Generator
 
-r = redis.Redis(host="localhost", port=6379)
+def fetch_all_records(base_url: str, api_key: str,
+                      max_retries: int = 5) -> Generator[dict, None, None]:
+    """Fetch all records from a paginated API with rate limit handling.
 
-st.title("Reddit Real-Time Sentiment Dashboard")
+    Yields individual records. Handles pagination via cursor-based
+    pagination and rate limits via exponential backoff.
+    """
+    cursor = None
+    retry_count = 0
 
-# Auto-refresh every 10 seconds
-placeholder = st.empty()
+    while True:
+        params = {"limit": 100}
+        if cursor:
+            params["cursor"] = cursor
 
-while True:
-    with placeholder.container():
-        subreddits = ["technology", "programming", "datascience"]
+        headers = {"Authorization": f"Bearer {api_key}"}
 
-        for sub in subreddits:
-            count = int(r.get(f"count:{sub}") or 0)
-            sentiments = r.lrange(f"sentiment:{sub}", 0, 299)
-            if sentiments:
-                avg_sentiment = sum(float(s) for s in sentiments) / len(sentiments)
-            else:
-                avg_sentiment = 0
+        try:
+            response = requests.get(base_url, params=params,
+                                    headers=headers, timeout=30)
 
-            st.metric(
-                label=f"r/{sub}",
-                value=f"{count} comments",
-                delta=f"Sentiment: {avg_sentiment:.2f}",
-            )
+            if response.status_code == 429:
+                # Rate limited: exponential backoff
+                retry_count += 1
+                if retry_count > max_retries:
+                    raise Exception(f"Rate limited {max_retries} times, giving up")
+                wait_time = min(2 ** retry_count, 60)  # Max 60 seconds
+                retry_after = response.headers.get("Retry-After")
+                if retry_after:
+                    wait_time = int(retry_after)
+                time.sleep(wait_time)
+                continue
 
-        # Show recent comments
-        st.subheader("Recent Comments")
-        recent = r.lrange("recent:technology", 0, 9)
-        for item in recent:
-            comment = json.loads(item)
-            emoji = "🟢" if comment["sentiment_polarity"] > 0.1 else "🔴" if comment["sentiment_polarity"] < -0.1 else "⚪"
-            st.text(f"{emoji} [{comment['subreddit']}] {comment['body'][:120]}")
+            response.raise_for_status()
+            retry_count = 0  # Reset on success
 
-    time.sleep(10)
-    st.rerun()
+            data = response.json()
+            for record in data["results"]:
+                yield record
+
+            # Check for next page
+            cursor = data.get("next_cursor")
+            if not cursor:
+                break  # No more pages
+
+        except requests.exceptions.Timeout:
+            retry_count += 1
+            if retry_count > max_retries:
+                raise
+            time.sleep(2 ** retry_count)
+
+
+# Usage:
+# for record in fetch_all_records("https://api.example.com/users", "key123"):
+#     process(record)
 ```
 
-**Step 8 — Add a Grafana dashboard** showing Kafka consumer lag, processing latency, and throughput metrics. This proves you think about operational concerns, not just features.
-
-**Step 9 — Write your design document** covering the architecture diagram, why you chose each storage backend, how you'd scale each component, and what breaks first under 100x load.
+**What interviewers look for:** Generator pattern (memory efficient for large datasets), exponential backoff, proper error handling, respecting Retry-After headers, timeout on requests.
 
 ---
 
-### Project 3: ML-Powered Churn Prediction System (3-4 weeks)
+### Challenge 2: File Processing with Schema Validation
 
-**What it demonstrates**: ML engineering, feature engineering, model deployment, monitoring, and the full lifecycle from training to serving.
-
-**The scenario**: You're building a system that predicts which users of a SaaS product will churn in the next 30 days, serves those predictions via an API, and monitors model performance over time. This is one of the most common ML applications in industry.
-
-#### Week 1: Data Preparation and Feature Engineering
-
-**Step 1 — Get the data.** Use the Telco Customer Churn dataset from Kaggle (free, ~7K rows) or generate synthetic data that mimics SaaS usage patterns:
+**Problem:** "Write a function that reads a CSV file, validates each row against a schema, writes valid rows to a Parquet file, and logs invalid rows to a separate error file."
 
 ```python
-# data/generate_synthetic.py
-"""Generate synthetic SaaS user data for churn prediction.
-
-Each row represents a user with their activity metrics
-over the last 90 days and whether they churned.
-"""
-import pandas as pd
-import numpy as np
-
-np.random.seed(42)
-n_users = 50_000
-
-users = pd.DataFrame({
-    "user_id": range(n_users),
-    "signup_days_ago": np.random.randint(30, 730, n_users),
-    "plan": np.random.choice(["free", "basic", "pro", "enterprise"],
-                             n_users, p=[0.4, 0.3, 0.2, 0.1]),
-    "logins_last_30d": np.random.poisson(12, n_users),
-    "logins_last_7d": np.random.poisson(3, n_users),
-    "features_used_last_30d": np.random.poisson(5, n_users),
-    "support_tickets_last_90d": np.random.poisson(1, n_users),
-    "api_calls_last_30d": np.random.poisson(50, n_users),
-    "team_size": np.random.choice([1, 2, 5, 10, 25, 50], n_users,
-                                  p=[0.3, 0.2, 0.2, 0.15, 0.1, 0.05]),
-    "days_since_last_login": np.random.exponential(7, n_users).astype(int),
-})
-
-# Churn probability increases with inactivity, small teams, free plan
-churn_score = (
-    0.3 * (users["days_since_last_login"] > 14).astype(float)
-    + 0.2 * (users["logins_last_30d"] < 5).astype(float)
-    + 0.15 * (users["plan"] == "free").astype(float)
-    + 0.1 * (users["team_size"] == 1).astype(float)
-    + 0.1 * (users["support_tickets_last_90d"] > 3).astype(float)
-    + np.random.normal(0, 0.15, n_users)
-)
-users["churned"] = (churn_score > 0.4).astype(int)
-
-users.to_parquet("data/users.parquet", index=False)
-print(f"Generated {n_users} users, churn rate: {users['churned'].mean():.1%}")
-```
-
-**Step 2 — Build a feature store with Feast:**
-
-```python
-# feature_store/feature_definitions.py
-"""Define features in Feast so training and serving use
-the exact same feature computation — eliminating
-training/serving skew.
-"""
-from feast import Entity, Feature, FeatureView, FileSource
-from feast.types import Float32, Int32, String
-from datetime import timedelta
-
-# Entity: the user we're predicting churn for
-user = Entity(name="user_id", join_keys=["user_id"])
-
-# Source: our Parquet file (in production, this would be a warehouse)
-user_source = FileSource(
-    path="data/users.parquet",
-    timestamp_field="event_timestamp",
-)
-
-# Feature view: the set of features available for this entity
-user_activity_fv = FeatureView(
-    name="user_activity",
-    entities=[user],
-    ttl=timedelta(days=1),
-    schema=[
-        Feature(name="logins_last_30d", dtype=Int32),
-        Feature(name="logins_last_7d", dtype=Int32),
-        Feature(name="features_used_last_30d", dtype=Int32),
-        Feature(name="days_since_last_login", dtype=Int32),
-        Feature(name="support_tickets_last_90d", dtype=Int32),
-        Feature(name="api_calls_last_30d", dtype=Int32),
-        Feature(name="team_size", dtype=Int32),
-        Feature(name="plan", dtype=String),
-    ],
-    source=user_source,
-)
-```
-
-**Step 3 — Train the model with MLflow tracking:**
-
-```python
-# training/train.py
-import mlflow
-import mlflow.sklearn
-import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    precision_score, recall_score, f1_score, roc_auc_score
-)
-from sklearn.preprocessing import LabelEncoder
-
-# Load data
-df = pd.read_parquet("data/users.parquet")
-
-# Encode categorical features
-le = LabelEncoder()
-df["plan_encoded"] = le.fit_transform(df["plan"])
-
-feature_cols = [
-    "logins_last_30d", "logins_last_7d", "features_used_last_30d",
-    "days_since_last_login", "support_tickets_last_90d",
-    "api_calls_last_30d", "team_size", "plan_encoded",
-]
-
-X = df[feature_cols]
-y = df["churned"]
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-
-# Train with MLflow experiment tracking
-mlflow.set_experiment("churn-prediction")
-
-with mlflow.start_run(run_name="gradient_boosting_v1"):
-    # Log parameters
-    params = {
-        "n_estimators": 200,
-        "max_depth": 5,
-        "learning_rate": 0.1,
-        "min_samples_leaf": 20,
-    }
-    mlflow.log_params(params)
-
-    # Train
-    model = GradientBoostingClassifier(**params, random_state=42)
-    model.fit(X_train, y_train)
-
-    # Evaluate
-    y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1]
-
-    metrics = {
-        "precision": precision_score(y_test, y_pred),
-        "recall": recall_score(y_test, y_pred),
-        "f1": f1_score(y_test, y_pred),
-        "auc_roc": roc_auc_score(y_test, y_prob),
-    }
-    mlflow.log_metrics(metrics)
-    print(f"Metrics: {metrics}")
-
-    # Log the model — this saves it in MLflow's model registry
-    mlflow.sklearn.log_model(model, "churn_model")
-
-    # Log feature importance
-    importance = pd.DataFrame({
-        "feature": feature_cols,
-        "importance": model.feature_importances_,
-    }).sort_values("importance", ascending=False)
-    print(f"\nFeature importance:\n{importance}")
-```
-
-#### Week 2: Model Serving API
-
-**Step 4 — Build a FastAPI serving endpoint:**
-
-```python
-# serving/app.py
-"""Serve churn predictions via REST API.
-
-The API loads the latest model from MLflow's registry
-and returns a churn probability for any user.
-"""
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import mlflow.sklearn
-import numpy as np
-
-app = FastAPI(title="Churn Prediction API")
-
-# Load the latest model from MLflow
-model = mlflow.sklearn.load_model("models:/churn_model/production")
-
-class PredictionRequest(BaseModel):
-    logins_last_30d: int
-    logins_last_7d: int
-    features_used_last_30d: int
-    days_since_last_login: int
-    support_tickets_last_90d: int
-    api_calls_last_30d: int
-    team_size: int
-    plan_encoded: int  # 0=free, 1=basic, 2=pro, 3=enterprise
-
-class PredictionResponse(BaseModel):
-    churn_probability: float
-    risk_level: str  # low, medium, high
-    top_risk_factors: list[str]
-
-@app.post("/predict", response_model=PredictionResponse)
-def predict_churn(request: PredictionRequest):
-    features = np.array([[
-        request.logins_last_30d, request.logins_last_7d,
-        request.features_used_last_30d, request.days_since_last_login,
-        request.support_tickets_last_90d, request.api_calls_last_30d,
-        request.team_size, request.plan_encoded,
-    ]])
-
-    probability = float(model.predict_proba(features)[0, 1])
-
-    # Determine risk level
-    if probability > 0.7:
-        risk = "high"
-    elif probability > 0.3:
-        risk = "medium"
-    else:
-        risk = "low"
-
-    # Identify top risk factors by comparing to population averages
-    risk_factors = []
-    if request.days_since_last_login > 14:
-        risk_factors.append("inactive_14_plus_days")
-    if request.logins_last_30d < 5:
-        risk_factors.append("low_engagement")
-    if request.plan_encoded == 0:
-        risk_factors.append("free_plan")
-    if request.team_size == 1:
-        risk_factors.append("single_user_account")
-
-    return PredictionResponse(
-        churn_probability=round(probability, 4),
-        risk_level=risk,
-        top_risk_factors=risk_factors,
-    )
-
-@app.get("/health")
-def health():
-    return {"status": "healthy", "model_version": "v1"}
-```
-
-**Step 5 — Test the API locally:**
-
-```bash
-# Start the server
-uvicorn serving.app:app --reload --port 8000
-
-# Test with curl
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "logins_last_30d": 2,
-    "logins_last_7d": 0,
-    "features_used_last_30d": 1,
-    "days_since_last_login": 21,
-    "support_tickets_last_90d": 4,
-    "api_calls_last_30d": 3,
-    "team_size": 1,
-    "plan_encoded": 0
-  }'
-```
-
-#### Week 3: Monitoring and Dashboard
-
-**Step 6 — Add model monitoring.** Track prediction distributions over time to detect model drift:
-
-```python
-# monitoring/monitor.py
-"""Track model predictions over time.
-
-Compares recent prediction distributions to the training
-distribution. If they diverge significantly, the model
-may need retraining (concept drift).
-"""
-from collections import deque
+import csv
+import json
+import pyarrow as pa
+import pyarrow.parquet as pq
 from datetime import datetime
-import statistics
+from pathlib import Path
+from dataclasses import dataclass
+from typing import Optional
 
-class ModelMonitor:
-    def __init__(self, training_churn_rate: float = 0.25):
-        self.predictions = deque(maxlen=10_000)
-        self.training_churn_rate = training_churn_rate
-        self.alerts = []
+@dataclass
+class ValidationResult:
+    is_valid: bool
+    errors: list[str]
 
-    def log_prediction(self, probability: float):
-        self.predictions.append({
-            "probability": probability,
-            "timestamp": datetime.utcnow().isoformat(),
-        })
+def validate_row(row: dict, schema: dict) -> ValidationResult:
+    """Validate a single row against a schema definition.
 
-    def check_drift(self) -> dict:
-        """Compare recent prediction distribution to training baseline."""
-        if len(self.predictions) < 100:
-            return {"status": "insufficient_data"}
-
-        recent_probs = [p["probability"] for p in self.predictions]
-        current_churn_rate = sum(
-            1 for p in recent_probs if p > 0.5
-        ) / len(recent_probs)
-
-        drift_magnitude = abs(current_churn_rate - self.training_churn_rate)
-
-        status = "healthy"
-        if drift_magnitude > 0.10:
-            status = "warning"
-            self.alerts.append(f"Churn rate shifted by {drift_magnitude:.1%}")
-        if drift_magnitude > 0.20:
-            status = "critical"
-            self.alerts.append(f"Major drift detected: {drift_magnitude:.1%}")
-
-        return {
-            "status": status,
-            "current_churn_rate": round(current_churn_rate, 4),
-            "training_churn_rate": self.training_churn_rate,
-            "drift_magnitude": round(drift_magnitude, 4),
-            "sample_size": len(recent_probs),
-            "mean_probability": round(statistics.mean(recent_probs), 4),
+    Schema format:
+    {
+        "columns": {
+            "user_id": {"type": "int", "required": True},
+            "email": {"type": "str", "required": True, "pattern": "@"},
+            "age": {"type": "int", "required": False, "min": 0, "max": 150},
         }
+    }
+    """
+    errors = []
+
+    for col_name, rules in schema["columns"].items():
+        value = row.get(col_name)
+
+        # Required check
+        if rules.get("required") and (value is None or value == ""):
+            errors.append(f"{col_name}: required but missing")
+            continue
+
+        if value is None or value == "":
+            continue
+
+        # Type check
+        expected_type = rules.get("type")
+        if expected_type == "int":
+            try:
+                int(value)
+            except ValueError:
+                errors.append(f"{col_name}: expected int, got '{value}'")
+                continue
+        elif expected_type == "float":
+            try:
+                float(value)
+            except ValueError:
+                errors.append(f"{col_name}: expected float, got '{value}'")
+                continue
+
+        # Range check
+        if "min" in rules and float(value) < rules["min"]:
+            errors.append(f"{col_name}: {value} below minimum {rules['min']}")
+        if "max" in rules and float(value) > rules["max"]:
+            errors.append(f"{col_name}: {value} above maximum {rules['max']}")
+
+        # Pattern check
+        if "pattern" in rules and rules["pattern"] not in str(value):
+            errors.append(f"{col_name}: does not match pattern '{rules['pattern']}'")
+
+    return ValidationResult(is_valid=len(errors) == 0, errors=errors)
+
+
+def process_csv_to_parquet(
+    input_path: str,
+    output_path: str,
+    error_path: str,
+    schema: dict
+) -> dict:
+    """Read CSV, validate, write valid rows to Parquet, errors to JSON lines."""
+    valid_rows = []
+    error_count = 0
+    total_count = 0
+
+    with open(input_path, "r") as csv_file, \
+         open(error_path, "w") as error_file:
+
+        reader = csv.DictReader(csv_file)
+
+        for row in reader:
+            total_count += 1
+            result = validate_row(row, schema)
+
+            if result.is_valid:
+                valid_rows.append(row)
+            else:
+                error_count += 1
+                error_record = {
+                    "row_number": total_count,
+                    "row_data": row,
+                    "errors": result.errors,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+                error_file.write(json.dumps(error_record) + "\n")
+
+    # Write valid rows to Parquet
+    if valid_rows:
+        table = pa.Table.from_pylist(valid_rows)
+        pq.write_table(table, output_path, compression="snappy")
+
+    return {
+        "total_rows": total_count,
+        "valid_rows": len(valid_rows),
+        "error_rows": error_count,
+        "error_rate": round(error_count / max(total_count, 1), 4),
+    }
 ```
 
-**Step 7 — Build a Streamlit monitoring dashboard** that shows: prediction volume over time, churn probability distribution (histogram), drift metrics, top risk factors across all recent predictions, and model performance metrics from MLflow.
-
-**Step 8 — Write your design document and deploy.** Containerize everything with Docker, push to a cloud provider, and document your architecture decisions.
+**What interviewers look for:** Clean separation of validation and I/O, use of Parquet (not CSV) for output, error logging with context (row number, specific error), summary statistics returned.
 
 ---
 
-### Documentation Matters
+### Challenge 3: Data Deduplication in Python
 
-For each project, write a design document that covers:
+**Problem:** "Write a function that deduplicates records from a large file that does not fit in memory. Records are JSON lines with an `id` field."
 
-- **Problem statement**: What business problem does this solve? Who are the users? What's the current pain point?
-- **Architecture diagram**: A clean diagram (use draw.io, Excalidraw, or even ASCII) showing every component and how data flows between them.
-- **Technology choices and justifications**: For each component, state what you chose and why. "I chose Redis for real-time aggregations because it supports atomic increments and has sub-millisecond reads" is far better than "I used Redis."
-- **Trade-offs**: What alternatives did you consider? Why did you reject them? "I considered Elasticsearch for real-time aggregations but chose Redis because our access pattern is key-value lookups, not full-text search. If we needed search, I'd add Elasticsearch as a secondary store."
-- **Data model**: Show your schema designs with explanations. Include entity-relationship diagrams for relational data.
-- **What breaks first at 10x scale**: Identify the bottleneck. "At 10x volume, the single Redis instance becomes the bottleneck. I'd shard by subreddit using Redis Cluster and add read replicas for the dashboard."
-- **What I'd do differently**: Be honest about shortcuts you took and how you'd improve them. "I used TextBlob for sentiment analysis because it's simple, but in production I'd use a fine-tuned transformer model for much higher accuracy."
+```python
+import json
+import hashlib
+from pathlib import Path
+from typing import Iterator
 
-A well-documented project where you explain your decisions is far more impressive than a complex project with no documentation.
+def deduplicate_large_file(
+    input_path: str,
+    output_path: str,
+    key_field: str = "id"
+) -> dict:
+    """Deduplicate a JSON lines file that may not fit in memory.
+
+    Uses a set of hashed keys (much smaller than full records)
+    to track seen records. For a file with 100M records and
+    UUID keys, the set uses roughly 4 GB of memory.
+
+    For truly massive files, use an external sort or Bloom filter.
+    """
+    seen_keys = set()
+    total = 0
+    duplicates = 0
+
+    with open(input_path, "r") as infile, \
+         open(output_path, "w") as outfile:
+
+        for line in infile:
+            total += 1
+            record = json.loads(line)
+            key = record.get(key_field)
+
+            if key is None:
+                # No key -- write it (or skip it, depending on requirements)
+                outfile.write(line)
+                continue
+
+            # Hash the key to save memory (16 bytes vs variable-length string)
+            key_hash = hashlib.md5(str(key).encode()).digest()
+
+            if key_hash not in seen_keys:
+                seen_keys.add(key_hash)
+                outfile.write(line)
+            else:
+                duplicates += 1
+
+    return {
+        "total_records": total,
+        "unique_records": total - duplicates,
+        "duplicates_removed": duplicates,
+    }
+```
+
+**Follow-up: "What if even the key hashes do not fit in memory?"**
+
+"I would use a probabilistic approach with a Bloom filter. It gives a small false positive rate (maybe 0.1%), meaning some duplicates might slip through, but it uses dramatically less memory. For a 0.1% false positive rate with 1 billion records, a Bloom filter uses about 1.2 GB. Alternatively, I would sort the file externally (using Unix `sort` or a merge sort on disk) and then deduplicate the sorted output in a single pass."
 
 ---
 
-## Career Development: Senior to Staff
+## Part 5: Behavioral Questions for Data Engineers
 
-The jump from senior to staff engineer isn't about deeper technical knowledge — it's about broader impact and different ways of thinking.
+Behavioral questions in DE interviews are specific to the challenges of working with data: quality issues, pipeline failures, stakeholder communication, and technical trade-offs.
 
-**Senior engineers** solve well-defined problems. "Build this feature," "Fix this bug," "Design this service."
+### Question 1: "Tell me about a time data quality failed."
 
-**Staff engineers** define which problems to solve. "Our data platform costs are growing faster than revenue — what's the strategy?" "We're expanding to 5 new markets — what infrastructure changes do we need?"
+**Framework:** Use STAR (Situation, Task, Action, Result) but lead with the impact.
 
-The key shifts:
+**Example answer:**
 
-1. **From implementation to architecture**: You spend less time coding and more time designing systems, writing design documents, and reviewing others' designs.
+"At my previous company, we had a data quality incident that went undetected for three weeks. Our marketing team was running campaigns based on a customer segmentation model that relied on purchase frequency data. A schema change in our source PostgreSQL database renamed a column from `order_total` to `total_amount`. Our extraction pipeline did not break -- it just started loading NULLs for that column.
 
-2. **From single-team to cross-team**: You identify problems that span multiple teams and drive alignment on solutions.
+**Impact:** The segmentation model classified high-value customers as inactive because their purchase amounts appeared to be zero. Marketing sent win-back campaigns to our best customers, which felt insulting and generated complaints.
 
-3. **From technical to sociotechnical**: You consider not just "what's the best technology?" but "what can our team actually operate?" and "how does this decision affect the organization?"
+**What I did:** First, I fixed the extraction to handle the renamed column. Second, I backfilled three weeks of data. Third -- and this is the important part -- I implemented three preventive measures:
+1. Schema drift detection in our ingestion layer that alerts when source columns change
+2. A dbt test on the orders model: `accepted_range` on `order_total` with a minimum of $0.01 (null or zero values fail the test)
+3. A daily anomaly check that compares today's average order value against the 30-day rolling average and alerts if it deviates by more than 20%
 
-4. **From answering to asking**: The most valuable skill is asking the right questions. "What problem are we actually solving?" "What happens if we do nothing?" "What's the simplest thing that could work?"
-
-> **Key Takeaway:** To grow toward staff engineer, practice thinking about systems in terms of business impact, organizational capability, and long-term evolution — not just technical elegance. Write design documents. Mentor others. Drive cross-team initiatives. The code you write matters less than the decisions you influence.
+**Result:** We have not had a similar incident in the 18 months since. The schema drift detection has caught 4 upstream changes before they affected downstream models."
 
 ---
 
-## Conclusion
+### Question 2: "Tell me about a time you disagreed with a stakeholder about technical approach."
 
-You've now traveled from the fundamentals of system design through storage engines, processing paradigms, data warehouses, lakehouses, ML platforms, distributed systems, observability, and cost optimization. You've studied how Netflix, Uber, Spotify, Airbnb, and Twitter solve problems at massive scale. And you've learned how to communicate your design thinking in interviews and career growth.
+**Example answer:**
 
-The most important thing to remember: **there are no perfect systems, only appropriate trade-offs.** Every technology, every architecture, every design decision involves giving something up to get something else. The mark of a great engineer is not knowing every technology — it's knowing how to evaluate trade-offs in context, make a decision, and communicate why.
+"Our VP of Analytics wanted to switch from Snowflake to BigQuery because BigQuery's per-query pricing seemed cheaper for our usage pattern. I disagreed because the migration would take 3-4 months, our 20 analysts would need retraining on BigQuery SQL dialects, and our dbt models had Snowflake-specific SQL that would need rewriting.
 
-Build things. Break things. Learn from both. Good luck.
+I did not just say 'no.' I ran the numbers. I estimated the total cost of migration: 3 months of engineering time (roughly $120K in loaded salary), analyst productivity loss during transition (estimated 30% reduction for 2 months), and the risk of pipeline incidents during migration.
+
+Then I showed that we could achieve the same cost savings ($40K/year) by optimizing our Snowflake usage: auto-suspend on idle warehouses, materialized views for the top 10 dashboard queries, and right-sizing our ETL warehouse from Large to Medium.
+
+The VP agreed to the optimization approach. We achieved the cost savings in 2 weeks instead of 3 months. The lesson: when you disagree, come with data and an alternative solution, not just objections."
+
+---
+
+### Question 3: "How do you prioritize when everything is urgent?"
+
+**Example answer:**
+
+"I use a simple framework: revenue impact times time sensitivity. A broken billing pipeline that affects invoicing this week is higher priority than a slow dashboard that annoys analysts.
+
+Concretely, I categorize issues into four tiers:
+- **P0:** Data loss or corruption affecting production systems or financial reporting. Drop everything.
+- **P1:** Pipeline failures affecting stakeholder SLAs (dashboards not refreshed by agreed time). Fix today.
+- **P2:** Performance degradation or non-critical quality issues. Fix this week.
+- **P3:** Improvements, optimizations, technical debt. Scheduled in sprint planning.
+
+I communicate this prioritization to stakeholders immediately. If an analyst asks me to investigate a dashboard discrepancy and I am in the middle of fixing a pipeline that feeds financial reporting, I tell them: 'I am fixing a P0 issue affecting finance. I will look at your dashboard issue this afternoon. If you need it sooner, here is the raw data query you can run directly.'"
+
+---
+
+### Question 4: "Describe a pipeline you built from scratch."
+
+**Framework:** Walk through the pipeline end-to-end, but focus on decisions and trade-offs, not just technology.
+
+"I built the customer analytics pipeline at [Company]. The source was our PostgreSQL production database with customer, order, and product data. The requirement was daily refreshed dashboards for 20 analysts showing customer lifetime value, cohort retention, and product affinity.
+
+**Decision 1: Ingestion method.** I chose CDC (Change Data Capture) via Airbyte rather than full extracts. With 5 million customer records, a full extract took 45 minutes. CDC captured only changes, reducing ingestion to under 3 minutes. The trade-off: CDC is more complex to set up and can miss changes if the WAL is purged.
+
+**Decision 2: Transformation approach.** I used dbt with incremental models for the fact tables. The `fact_orders` table grows by 50K rows/day; full refresh would scan 20M rows every run. Incremental processing touches only new and updated rows.
+
+**Decision 3: Data quality.** I implemented three layers of tests: dbt generic tests (not null, unique, relationships), dbt custom tests (order amounts within expected range, no future-dated orders), and a daily reconciliation against the source database (total orders and revenue must match).
+
+The pipeline ran in Airflow with a 2 AM start time and a 6:30 AM SLA. It consistently completed in 18 minutes. Over 12 months, we had 2 incidents: one Snowflake outage (not our fault) and one schema change in the source database (caught by our schema drift detection within 15 minutes)."
+
+---
+
+## Part 6: Take-Home Project Tips
+
+Many companies include a take-home project in the DE interview process. This is where your Module 10 capstone becomes your secret weapon.
+
+### Your Capstone IS Your Take-Home
+
+If a company asks you to "build a data pipeline that ingests, transforms, and serves data," you have already done this. Adapt your capstone:
+
+1. **Read the requirements carefully.** Match your capstone architecture to their specific ask. Do they want real-time? Add a Kafka component. Do they want ML? Add a simple model. Do they want cost analysis? Include it (you covered this in Appendix A).
+
+2. **Do not over-engineer.** A clean, well-documented pipeline with 5 components beats a sprawling system with 15 components and no documentation. Reviewers spend 30-60 minutes evaluating your project. Make it easy to understand.
+
+3. **Include a README with these sections:**
+   - Architecture diagram (even ASCII art works)
+   - How to run it (Docker Compose up, ideally)
+   - Technology choices and why
+   - Data model with schema descriptions
+   - What you would do differently with more time
+   - What breaks at 10x scale
+
+4. **Include tests.** Even 5-10 tests show that you think about quality. Test your dbt models, test your Python functions, test your API responses.
+
+5. **Include monitoring.** Even a simple `print(f"Loaded {row_count} rows in {duration}s")` shows operational awareness. A Grafana dashboard is better. Airflow with alerting is best.
+
+### Common Take-Home Mistakes
+
+- **No README or poor documentation.** The reviewer cannot figure out how to run it. Automatic fail.
+- **Works on your machine only.** Not containerized, hard-coded paths, missing dependencies. Use Docker.
+- **No error handling.** The API returns a 500 and the pipeline crashes with an unhandled exception.
+- **No data quality.** Raw data flows straight to the output with no validation, deduplication, or null handling.
+- **Premature optimization.** Using Kafka, Flink, and Redis for a project that processes 1000 rows. Shows lack of judgment.
+
+---
+
+## Part 7: Company-Specific Interview Preparation
+
+### FAANG / Big Tech (Google, Meta, Amazon, Netflix, Apple)
+
+**Format:** Typically 5-6 rounds over a full day (virtual or on-site):
+1. SQL coding (45 min): Medium to hard LeetCode-style SQL problems. Window functions, CTEs, self-joins.
+2. Python coding (45 min): Data processing tasks, not algorithmic puzzles.
+3. System design (45 min): "Design a data pipeline for..." at massive scale.
+4. Data modeling (45 min): Design a star schema, discuss trade-offs, handle edge cases.
+5. Behavioral (45 min): Leadership principles (Amazon), collaboration stories, handling ambiguity.
+6. Hiring manager (30 min): Culture fit, career goals, team dynamics.
+
+**What differentiates FAANG interviews:**
+- Scale expectations are higher. "How does this work at 1 billion events per day?" is a normal follow-up.
+- They care about custom solutions. "Kafka does not meet our latency requirements at this scale. What would you build?"
+- They test fundamentals deeply. Do not just know that Parquet is columnar; explain how column pruning reduces I/O.
+- Behavioral questions are rigorous, especially at Amazon (every answer should map to a Leadership Principle).
+
+**Preparation tips:**
+- Practice SQL daily for 2 weeks before the interview. Use LeetCode Database problems (medium and hard).
+- Prepare 8-10 behavioral stories using STAR format. Ensure each story demonstrates a different quality (technical depth, conflict resolution, working with ambiguity, delivering under pressure).
+- Study the company's public engineering blog. Netflix Tech Blog, Meta Engineering, Google Cloud Blog all publish articles about their data infrastructure.
+
+---
+
+### Unicorn / Late-Stage Startup (Stripe, Databricks, Snowflake, Airbnb)
+
+**Format:** Typically 4-5 rounds:
+1. Technical screen (SQL + Python, 60 min)
+2. System design (45-60 min)
+3. Practical/take-home project (2-4 hours, done at home)
+4. Behavioral + culture fit (45 min)
+5. Hiring manager (30 min)
+
+**What differentiates unicorn interviews:**
+- More practical and less theoretical than FAANG. "How would you actually build this?" vs "What is the theoretical optimal approach?"
+- Take-home projects are common. You may build a small pipeline from scratch.
+- They value speed of delivery. Can you build something good in 4 hours?
+- Domain knowledge matters. If interviewing at Stripe, know payment data. At Databricks, know Spark deeply.
+
+---
+
+### Mid-Market and Enterprise Companies
+
+**Format:** Typically 3-4 rounds:
+1. Technical screen (SQL focus, 45 min)
+2. System design or architecture discussion (45 min)
+3. Behavioral (30-45 min)
+4. Hiring manager (30 min)
+
+**What differentiates enterprise interviews:**
+- SQL is the primary technical assessment. Window functions, CTEs, and performance tuning.
+- Less emphasis on distributed systems and more on data modeling, warehouse optimization, and BI integration.
+- They care about communication with non-technical stakeholders. "How would you explain this data model to a product manager?"
+- Domain knowledge can be a significant advantage (healthcare, finance, retail).
+
+---
+
+### Early-Stage Startup (Seed to Series B)
+
+**Format:** Typically 2-3 rounds:
+1. Technical conversation (60 min, mix of SQL, Python, and architecture)
+2. Take-home project or pair programming (2-3 hours)
+3. Founder/CTO (30-45 min)
+
+**What differentiates startup interviews:**
+- Breadth over depth. Can you do ingestion AND transformation AND analytics AND infra?
+- They want to see pragmatism. "I would use BigQuery and dbt Cloud to ship this in 2 weeks" beats "I would design a custom lakehouse architecture."
+- Speed and scrappiness matter. They need someone who can build the first version alone.
+- Culture fit with the founding team matters as much as technical ability.
+
+---
+
+## Part 8: Practice Plan
+
+### 4-Week Interview Preparation Schedule
+
+**Week 1: SQL Foundations**
+- Days 1-3: Practice 3 medium SQL problems per day (LeetCode Database section)
+- Days 4-5: Practice 2 hard SQL problems per day
+- Days 6-7: Write SQL solutions to the challenges in Part 2 of this appendix from memory
+
+**Week 2: System Design + Data Modeling**
+- Days 1-2: Practice designing an ETL pipeline (Design Problem 2 above). Time yourself to 45 minutes.
+- Days 3-4: Practice designing a real-time system (Design Problem 1 above). Time yourself to 45 minutes.
+- Days 5-6: Practice data modeling questions (Part 1 above). Draw schemas on paper.
+- Day 7: Review the case studies in Appendix B. Practice describing one architecture in 5 minutes.
+
+**Week 3: Python + Behavioral**
+- Days 1-3: Code the Python challenges in Part 4. Then write them again from memory.
+- Days 4-5: Write out your behavioral stories (Part 5). Practice delivering them out loud in 2 minutes each.
+- Days 6-7: Mock interview with a friend or practice partner. Full 45-minute system design.
+
+**Week 4: Company-Specific Prep**
+- Days 1-2: Research the specific company. Read their engineering blog. Understand their data stack.
+- Days 3-4: Practice the interview format specific to that company type (Part 7 above).
+- Days 5-6: Review weak areas identified in mock interviews.
+- Day 7: Rest. You are prepared.
+
+---
+
+## Quick Reference: What to Review the Night Before
+
+- [ ] Star schema design pattern: fact tables, dimension tables, grain, surrogate keys
+- [ ] SCD Type 1 vs Type 2 (when to use each)
+- [ ] SQL window functions: ROW_NUMBER, RANK, LAG, LEAD, SUM OVER
+- [ ] CTE syntax and when to use CTEs vs subqueries
+- [ ] Deduplication pattern: ROW_NUMBER OVER (PARTITION BY key ORDER BY timestamp)
+- [ ] Python: requests library, error handling, generators
+- [ ] System design: Lambda architecture (real-time + batch paths)
+- [ ] Kafka basics: topics, partitions, consumer groups, at-least-once delivery
+- [ ] dbt basics: staging → intermediate → marts, incremental models, tests
+- [ ] Airflow basics: DAGs, operators, sensors, task dependencies
+- [ ] Cost optimization: auto-suspend, partition pruning, lifecycle policies
+- [ ] Your 3 best behavioral stories (data quality failure, technical disagreement, pipeline build)
+- [ ] Your capstone project architecture (be ready to draw it from memory)
+
+> **Key Takeaway:** Interview preparation is not about memorizing answers. It is about internalizing patterns so deeply that you can apply them to any question. The SQL patterns, system design structures, and communication frameworks in this appendix are the same patterns used in every module of this course. You have been preparing for these interviews since Module 0. Trust your preparation, communicate clearly, and show your thinking process.

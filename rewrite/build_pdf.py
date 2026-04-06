@@ -14,7 +14,7 @@ from pathlib import Path
 import re
 
 REWRITE_DIR = Path(__file__).parent
-OUTPUT_PDF = REWRITE_DIR.parent / "System-Data-Design-Masterclass-Rewrite.pdf"
+OUTPUT_PDF = REWRITE_DIR.parent / "Data_Engineering_Course.pdf"
 
 # Ordered list of module files
 MODULES = [
@@ -39,7 +39,7 @@ CSS = """
     size: A4;
     margin: 2.2cm 2cm 2.5cm 2cm;
     @bottom-center {
-        content: "System & Data Design Masterclass";
+        content: "Data Engineering: From Foundations to Production";
         font-size: 8pt;
         color: #888;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -116,6 +116,13 @@ CSS = """
 }
 .toc-page li strong {
     color: #0f172a;
+}
+.toc-page li a {
+    color: #334155;
+    text-decoration: none;
+}
+.toc-page li a:hover {
+    color: #2563eb;
 }
 
 /* ---- Base typography ---- */
@@ -387,22 +394,22 @@ pre:not(.codehilite) {
 def build_toc():
     """Generate a table of contents from module file names."""
     entries = [
-        ("Introduction: Welcome to System & Data Design", "00"),
-        ("Module 1: Foundations of System Design", "01"),
-        ("Module 2: Data Modeling & Schema Design", "02"),
-        ("Module 3: Storage Systems Deep Dive", "03"),
-        ("Module 4: Batch Processing & ETL", "04"),
-        ("Module 5: Stream Processing & Real-Time Systems", "05"),
-        ("Module 6: Data Warehouse Architecture", "06"),
-        ("Module 7: Data Lakes & Lakehouse Architecture", "07"),
-        ("Module 8: ML Platforms & Feature Stores", "08"),
-        ("Module 9: Event-Driven & Distributed Systems", "09"),
-        ("Module 10: Monitoring, Observability & Data Quality", "10"),
-        ("Module 11: Cost Optimization & Capacity Planning", "11"),
-        ("Module 12: Case Studies — Real-World Systems", "12"),
-        ("Module 13: Interview Preparation & Portfolio Projects", "13"),
+        ("Module 0: Welcome & Setup", "00"),
+        ("Module 1: Data Modeling Foundations", "01"),
+        ("Module 2: SQL for Data Engineers", "02"),
+        ("Module 3: Python for Data Engineers", "03"),
+        ("Module 4: Apache Airflow — Orchestration", "04"),
+        ("Module 5: Apache Spark & Big Data Processing", "05"),
+        ("Module 6: Apache Kafka & Streaming", "06"),
+        ("Module 7: Data Quality & Testing", "07"),
+        ("Module 8: Cloud Infrastructure for Data Engineers", "08"),
+        ("Module 9: Data Engineering for AI", "09"),
+        ("Module 10: Capstone Project — Real-Time E-Commerce Analytics", "10"),
+        ("Appendix A: Career Resources & Cost Optimization", "11"),
+        ("Appendix B: Real-World Case Studies", "12"),
+        ("Appendix C: Interview Preparation", "13"),
     ]
-    items = "\n".join(f"  <li><strong>{num}</strong> &mdash; {title}</li>"
+    items = "\n".join(f'  <li><a href="#module-{num}"><strong>{num}</strong> &mdash; {title}</a></li>'
                        for title, num in entries)
     return f"""
 <div class="toc-page">
@@ -432,7 +439,7 @@ def convert_md_to_html(md_text: str) -> str:
 
 
 def main():
-    print("Building System & Data Design Masterclass PDF...")
+    print("Building Data Engineering: From Foundations to Production PDF...")
 
     # Read all modules
     all_html_parts = []
@@ -443,17 +450,19 @@ def main():
             continue
         md_text = filepath.read_text(encoding="utf-8")
         html = convert_md_to_html(md_text)
-        all_html_parts.append(f'<div class="module-content">{html}</div>')
+        # Extract module number from filename (e.g. "04-batch-processing.md" → "04")
+        module_id = filename.split("-")[0]
+        all_html_parts.append(f'<div class="module-content" id="module-{module_id}">{html}</div>')
         print(f"  ✓ {filename}")
 
     # Build cover page
     cover = """
 <div class="cover">
-  <h1>System &amp; Data Design<br>Masterclass</h1>
-  <div class="subtitle">The Complete Guide to Building Enterprise Data Systems</div>
+  <h1>Data Engineering</h1>
+  <div class="subtitle">From Foundations to Production</div>
   <div class="tagline">
-    From foundations to production — learn how Netflix, Uber, Spotify,
-    Airbnb, and Twitter design systems that serve hundreds of millions of users.
+    Modules 0–10 &middot; Hands-on Practitioner's Guide<br>
+    2026 Edition
   </div>
 </div>
 """
@@ -466,7 +475,7 @@ def main():
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>System &amp; Data Design Masterclass</title>
+  <title>Data Engineering: From Foundations to Production</title>
   <style>{CSS}</style>
 </head>
 <body>
