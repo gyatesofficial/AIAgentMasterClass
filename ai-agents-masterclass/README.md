@@ -1,6 +1,15 @@
-# AI Agents: From Architecture to Production
+# AI Agents: From Architecture to Production — Companion Repo
 
-A comprehensive course repository for building production-grade AI agent systems. You will build a real AI Customer Support Platform incrementally across 15 modules, learning each concept by applying it to a working system.
+> **Official companion repository for the course *AI Agents: From Architecture to Production* by George Yates.**
+> Course repo: [github.com/gyatesofficial/AIAgentMasterClass](https://github.com/gyatesofficial/AIAgentMasterClass)
+
+This repo contains all the code, examples, and the production platform you build across the 15 modules of the course. Each module maps directly to a course section — clone this repo, follow along, and you will have a working AI Customer Support Platform by the end.
+
+---
+
+## What You Build
+
+An AI Customer Support Agent Platform that:
 
 ---
 
@@ -30,8 +39,9 @@ An AI Customer Support Agent Platform that:
 ## Quick Start
 
 ```bash
-# 1. Clone and enter the repo
-cd CourseFiles
+# 1. Clone the repo
+git clone https://github.com/gyatesofficial/AIAgentMasterClass.git
+cd AIAgentMasterClass
 
 # 2. Create virtual environment
 python3 -m venv .venv

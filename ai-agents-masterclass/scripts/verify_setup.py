@@ -276,7 +276,7 @@ def print_summary(results: dict[str, bool]) -> None:
 def main():
     print(f"\n{BOLD}AI Agents Course — Environment Verification{RESET}")
     print(f"{'=' * 50}")
-    print(f"Repository: https://github.com/thedataguygeorge/ai-agents-masterclass")
+    print(f"Repository: https://github.com/gyatesofficial/AIAgentMasterClass")
 
     # Load .env before running checks
     load_env_file()

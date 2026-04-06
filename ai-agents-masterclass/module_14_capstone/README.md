@@ -126,4 +126,4 @@ You've built:
 
 Share your project: Tag `#AIAgentsCourse` and `@thedataguygeorge` on social media.
 
-GitHub: https://github.com/thedataguygeorge/ai-agents-masterclass
+GitHub: https://github.com/gyatesofficial/AIAgentMasterClass

@@ -119,7 +119,7 @@ app = FastAPI(
     description=(
         "An AI-powered customer support platform built with FastAPI, LangGraph, "
         "and OpenAI/Anthropic. Part of the 'AI Agents: From Architecture to Production' course.\n\n"
-        "GitHub: https://github.com/thedataguygeorge/ai-agents-masterclass"
+        "GitHub: https://github.com/gyatesofficial/AIAgentMasterClass"
     ),
     version="1.0.0",
     lifespan=lifespan,
@@ -202,7 +202,7 @@ async def root():
         "docs": "/docs",
         "health": "/health",
         "course": "AI Agents: From Architecture to Production",
-        "github": "https://github.com/thedataguygeorge/ai-agents-masterclass",
+        "github": "https://github.com/gyatesofficial/AIAgentMasterClass",
     }
 
 
