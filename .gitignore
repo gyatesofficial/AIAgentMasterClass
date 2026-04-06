@@ -1,0 +1,5 @@
+# Ignore everything at the root except the companion repo folder
+*
+!.gitignore
+!ai-agents-masterclass/
+!ai-agents-masterclass/**
